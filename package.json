@@ -4,6 +4,10 @@
   "displayName": "Arazzo VSCode",
   "pricing": "Free",
   "description": "VS Code extension for Arazzo YAML files with navigation, autocompletion, and validation.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/connEthics/arazzo-vscode.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.107.0"
