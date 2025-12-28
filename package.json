@@ -25,8 +25,22 @@
       {
         "command": "arazzo-vscode.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "arazzo-vscode.openPreview",
+        "title": "Open Arazzo Preview",
+        "icon": "$(preview)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "arazzo-vscode.openPreview",
+          "when": "resourceLangId == yaml",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
