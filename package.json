@@ -9,7 +9,7 @@
     "type": "git",
     "url": "https://github.com/connEthics/arazzo-vscode.git"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.90.0"
   },

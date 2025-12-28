@@ -2,6 +2,12 @@
 
 All notable changes to the "arazzo-vscode" extension will be documented in this file.
 
+## [0.0.3] - 2025-12-28
+
+### Added
+- **Synchronized Views**: Clicking a step in the Flowchart view now automatically scrolls to the corresponding step details in the Documentation view.
+- **Marketplace Metadata**: Added categories and keywords for better discoverability.
+
 ## [0.0.2] - 2025-12-28
 
 ### Added
