@@ -30,12 +30,22 @@
         "command": "arazzo-vscode.openPreview",
         "title": "Open Arazzo Preview",
         "icon": "$(preview)"
+      },
+      {
+        "command": "arazzo-vscode.openFlowchart",
+        "title": "Open Arazzo Flowchart",
+        "icon": "$(graph)"
       }
     ],
     "menus": {
       "editor/title/run": [
         {
           "command": "arazzo-vscode.openPreview",
+          "when": "resourceLangId == yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "arazzo-vscode.openFlowchart",
           "when": "resourceLangId == yaml",
           "group": "navigation"
         }

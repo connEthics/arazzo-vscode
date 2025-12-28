@@ -5,6 +5,11 @@ All notable changes to the "arazzo-vscode" extension will be documented in this 
 ## [0.0.2] - 2025-12-28
 
 ### Added
+- **Flowchart View**:
+    - New command `Open Arazzo Flowchart` to visualize workflows as diagrams.
+    - Automatic detection of the active workflow based on cursor position.
+    - Manual workflow selector.
+    - Mermaid.js integration for rendering.
 - **Interactive Preview Panel**:
     - View Arazzo specifications in a dedicated webview panel.
     - Live updates as you type.

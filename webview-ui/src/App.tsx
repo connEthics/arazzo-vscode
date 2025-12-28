@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import UnifiedDocumentationView from './components/UnifiedDocumentationView';
+import FlowchartView from './components/FlowchartView';
 import { ArazzoSpec } from './types/arazzo';
 
 // Mock data for initial render if needed, or empty
@@ -13,6 +14,8 @@ const emptySpec: ArazzoSpec = {
 function App() {
   const [spec, setSpec] = useState<ArazzoSpec>(emptySpec);
   const [isDark, setIsDark] = useState(true);
+  const [viewMode, setViewMode] = useState<'documentation' | 'flowchart'>('documentation');
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     // Listen for messages from the extension
@@ -20,6 +23,15 @@ function App() {
       const message = event.data;
       if (message.type === 'update') {
         setSpec(message.spec);
+        setViewMode('documentation');
+      } else if (message.type === 'update-flowchart') {
+        setSpec(message.spec);
+        setViewMode('flowchart');
+        if (message.workflowId) {
+            setSelectedWorkflowId(message.workflowId);
+        }
+      } else if (message.type === 'select-workflow') {
+          setSelectedWorkflowId(message.workflowId);
       }
     };
 
@@ -87,12 +99,21 @@ function App() {
 
   return (
     <div className="min-h-screen bg-[var(--vscode-editor-background)] text-[var(--vscode-editor-foreground)]">
-      <UnifiedDocumentationView 
-        spec={spec} 
-        isDark={isDark} 
-        onStepClick={handleStepClick}
-        onWorkflowSelect={handleWorkflowSelect}
-      />
+      {viewMode === 'flowchart' ? (
+        <FlowchartView 
+            spec={spec} 
+            isDark={isDark} 
+            selectedWorkflowId={selectedWorkflowId}
+            onWorkflowSelect={setSelectedWorkflowId}
+        />
+      ) : (
+        <UnifiedDocumentationView 
+            spec={spec} 
+            isDark={isDark} 
+            onStepClick={handleStepClick}
+            onWorkflowSelect={handleWorkflowSelect}
+        />
+      )}
     </div>
   );
 }
