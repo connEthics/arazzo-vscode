@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Workflow } from '../../types/arazzo';
-import { Badge, EditableField } from '../primitives';
+import { Badge, EditableField } from '@/components/primitives';
 
 export type WorkflowHeaderVariant = 'card' | 'inspector' | 'header';
 

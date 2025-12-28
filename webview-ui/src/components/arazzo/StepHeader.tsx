@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Step } from '../../types/arazzo';
-import { Badge, EditableField } from '../primitives';
+import { Badge, EditableField } from '@/components/primitives';
 import { extractHttpMethod, getMethodBadgeVariant, type HttpMethod } from '../../lib/arazzo-utils';
 
 export type StepHeaderVariant = 'node' | 'card' | 'inspector';

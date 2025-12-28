@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Badge } from '../primitives';
+import { Badge } from '@/components/primitives';
 
 // Recursive component to display schema properties with validation rules
 export default function SchemaViewer({ 

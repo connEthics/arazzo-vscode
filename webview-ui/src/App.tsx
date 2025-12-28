@@ -11,6 +11,9 @@ const emptySpec: ArazzoSpec = {
   workflows: []
 };
 
+// @ts-ignore
+const vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : null;
+
 function App() {
   const [spec, setSpec] = useState<ArazzoSpec>(emptySpec);
   const [isDark, setIsDark] = useState(true);
@@ -32,16 +35,15 @@ function App() {
         }
       } else if (message.type === 'select-workflow') {
           setSelectedWorkflowId(message.workflowId);
+      } else if (message.type === 'scroll-to-step') {
+          handleStepClick(message.stepId, message.workflowId);
       }
     };
 
     window.addEventListener('message', handleMessage);
     
     // Signal ready
-    // @ts-ignore
-    if (window.acquireVsCodeApi) {
-        // @ts-ignore
-        const vscode = window.acquireVsCodeApi();
+    if (vscode) {
         vscode.postMessage({ type: 'ready' });
     }
 
@@ -105,6 +107,11 @@ function App() {
             isDark={isDark} 
             selectedWorkflowId={selectedWorkflowId}
             onWorkflowSelect={setSelectedWorkflowId}
+            onStepSelect={(stepId, workflowId) => {
+                if (vscode) {
+                    vscode.postMessage({ type: 'step-selected', stepId, workflowId });
+                }
+            }}
         />
       ) : (
         <UnifiedDocumentationView 

@@ -1,5 +1,5 @@
-import type { Workflow } from '../../types/arazzo';
-import { SectionHeader, Badge } from '../primitives';
+import type { Workflow, WorkflowInputs } from '../../types/arazzo';
+import { SectionHeader, Badge } from '@/components/primitives';
 import { InputContent, OutputContent } from '../DetailViews';
 
 interface WorkflowBodyProps {
@@ -49,7 +49,7 @@ export default function WorkflowBody({
                     mutedClass={mutedClass}
                     codeBgClass={codeBgClass}
                     editable={editable}
-                    onUpdate={(inputs) => onUpdate?.({ inputs })}
+                    onUpdate={(inputs: WorkflowInputs) => onUpdate?.({ inputs })}
                     onReorder={onReorderInput}
                     expressionSuggestions={expressionSuggestions}
                 />
@@ -70,7 +70,7 @@ export default function WorkflowBody({
                     mutedClass={mutedClass}
                     codeBgClass={codeBgClass}
                     editable={editable}
-                    onUpdate={(outputs) => onUpdate?.({ outputs })}
+                    onUpdate={(outputs: Record<string, string>) => onUpdate?.({ outputs })}
                     onReorder={onReorderOutput}
                     expressionSuggestions={expressionSuggestions}
                 />

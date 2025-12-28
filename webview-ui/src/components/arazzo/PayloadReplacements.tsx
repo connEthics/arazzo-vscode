@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Card, PropertyList } from '../primitives';
+import { Card, PropertyList } from '@/components/primitives';
 import type { PayloadReplacement } from '../../types/arazzo';
 
 interface PayloadReplacementsProps {

@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Card, Badge } from '../primitives';
+import { Card, Badge } from '@/components/primitives';
 import ReusableRef from './ReusableRef';
 import CriterionBadge from './CriterionBadge';
 import type { SuccessAction, FailureAction, ReusableObject, Criterion } from '../../types/arazzo';

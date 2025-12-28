@@ -1,5 +1,5 @@
 import { memo } from 'react';
-import { Badge } from '../primitives';
+import { Badge } from '@/components/primitives';
 
 interface DependsOnListProps {
   dependencies: string[];

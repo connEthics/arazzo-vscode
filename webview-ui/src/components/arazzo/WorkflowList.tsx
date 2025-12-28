@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import type { Workflow } from '../../types/arazzo';
-import { Badge } from '../primitives';
+import { Badge } from '@/components/primitives';
 import { getThemeClasses } from '../../hooks/useThemeClasses';
 
 interface WorkflowListProps {

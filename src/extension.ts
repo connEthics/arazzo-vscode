@@ -218,6 +218,17 @@ class ArazzoPreviewPanel {
         this._panel.webview.postMessage({ type: 'update', spec: spec });
     }
 
+    public static scrollToStep(resourceUri: vscode.Uri, stepId: string, workflowId: string) {
+        const key = resourceUri.toString();
+        if (ArazzoPreviewPanel.panels.has(key)) {
+            ArazzoPreviewPanel.panels.get(key)?._panel.webview.postMessage({ 
+                type: 'scroll-to-step', 
+                stepId: stepId, 
+                workflowId: workflowId 
+            });
+        }
+    }
+
     private async _updateSpec() {
         try {
             const document = await vscode.workspace.openTextDocument(this._resourceUri);
@@ -263,7 +274,7 @@ class ArazzoPreviewPanel {
         const nonce = getNonce();
 
         // Inject CSP meta tag
-        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">`;
+        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">`;
         htmlContent = htmlContent.replace('<head>', `<head>\n${cspMeta}`);
 
         // Add nonce to script tags
@@ -333,6 +344,9 @@ class ArazzoFlowchartPanel {
                         return;
                     case 'alert':
                         vscode.window.showErrorMessage(message.text);
+                        return;
+                    case 'step-selected':
+                        ArazzoPreviewPanel.scrollToStep(this._resourceUri, message.stepId, message.workflowId);
                         return;
                 }
             },
@@ -433,7 +447,7 @@ class ArazzoFlowchartPanel {
         }
 
         const nonce = getNonce();
-        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">`;
+        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">`;
         htmlContent = htmlContent.replace('<head>', `<head>\n${cspMeta}`);
         htmlContent = htmlContent.replace(/<script/g, `<script nonce="${nonce}"`);
 

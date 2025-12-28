@@ -9,9 +9,10 @@ interface FlowchartViewProps {
     isDark: boolean;
     selectedWorkflowId?: string;
     onWorkflowSelect: (id: string) => void;
+    onStepSelect?: (stepId: string, workflowId: string) => void;
 }
 
-export default function FlowchartView({ spec, isDark, selectedWorkflowId, onWorkflowSelect }: FlowchartViewProps) {
+export default function FlowchartView({ spec, isDark, selectedWorkflowId, onWorkflowSelect, onStepSelect }: FlowchartViewProps) {
     const theme = getThemeClasses(isDark);
     
     // Default to first workflow if none selected
@@ -68,6 +69,7 @@ export default function FlowchartView({ spec, isDark, selectedWorkflowId, onWork
                         chart={chart} 
                         isDark={isDark}
                         steps={spec.workflows.find(w => w.workflowId === activeWorkflowId)?.steps}
+                        onNodeClick={(stepId) => onStepSelect?.(stepId, activeWorkflowId)}
                     />
                 ) : (
                     <div className="flex items-center justify-center h-full opacity-50">

@@ -4,8 +4,8 @@ import { isReusableObject } from '../../types/arazzo';
 
 // Import internal components
 import { CriterionBadge, ActionList, PayloadReplacements } from './index';
-import { Card, Badge, CodeBlock, PropertyList, EditableField, EditableListItem } from '../primitives';
-import type { ParameterIn } from '../primitives/EditableListItem';
+import { Card, Badge, CodeBlock, PropertyList, EditableField, EditableListItem } from '@/components/primitives';
+import type { ParameterIn } from '@/components/primitives/EditableListItem';
 import type { ExpressionSuggestion } from '../ExpressionInput';
 import ActionFormEditor, { Action } from '../ActionFormEditor';
 
