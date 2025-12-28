@@ -15,3 +15,8 @@ vsc-extension-quickstart.md
 .github/**
 context/**
 .vscode-test.mjs
+
+# Webview UI exclusions
+webview-ui/**
+!webview-ui/build/**
+
