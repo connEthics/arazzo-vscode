@@ -14,7 +14,19 @@
     "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Visualization",
+    "Linters"
+  ],
+  "keywords": [
+    "arazzo",
+    "api",
+    "workflow",
+    "testing",
+    "openapi",
+    "yaml",
+    "visualization",
+    "flowchart"
   ],
   "activationEvents": [
     "onLanguage:yaml"
