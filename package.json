@@ -9,12 +9,24 @@
     "type": "git",
     "url": "https://github.com/connEthics/arazzo-vscode.git"
   },
-  "version": "0.0.1",
+  "version": "0.0.3",
   "engines": {
-    "vscode": "^1.107.0"
+    "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+    "Programming Languages",
+    "Visualization",
+    "Linters"
+  ],
+  "keywords": [
+    "arazzo",
+    "api",
+    "workflow",
+    "testing",
+    "openapi",
+    "yaml",
+    "visualization",
+    "flowchart"
   ],
   "activationEvents": [
     "onLanguage:yaml"
@@ -25,8 +37,32 @@
       {
         "command": "arazzo-vscode.helloWorld",
         "title": "Hello World"
+      },
+      {
+        "command": "arazzo-vscode.openPreview",
+        "title": "Open Arazzo Preview",
+        "icon": "$(preview)"
+      },
+      {
+        "command": "arazzo-vscode.openFlowchart",
+        "title": "Open Arazzo Flowchart",
+        "icon": "$(graph)"
       }
-    ]
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "arazzo-vscode.openPreview",
+          "when": "resourceLangId == yaml",
+          "group": "navigation"
+        },
+        {
+          "command": "arazzo-vscode.openFlowchart",
+          "when": "resourceLangId == yaml",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",
@@ -42,7 +78,7 @@
   "devDependencies": {
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "@types/vscode": "^1.107.0",
+    "@types/vscode": "^1.90.0",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "eslint": "^9.39.1",

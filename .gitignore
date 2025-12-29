@@ -1,5 +1,19 @@
+# Editor
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+.DS_Store
+
+# Build
 out
 dist
 node_modules
 .vscode-test/
 *.vsix
+
+# Webview
+webview-ui/node_modules
+webview-ui/build
+webview-ui/.DS_Store

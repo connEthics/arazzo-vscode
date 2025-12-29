@@ -13,6 +13,24 @@ Thank you for your interest in contributing to Arazzo VSCode! We welcome contrib
 7.  **Push changes**: Push your branch to your fork on GitHub.
 8.  **Submit a Pull Request**: Open a Pull Request against the main repository.
 
+## Packaging for Marketplace
+
+To create a VSIX package for the VS Code Marketplace:
+
+1.  **Update Version**: Update the version number in `package.json`.
+2.  **Build Webview**: Ensure the webview is built.
+    ```bash
+    cd webview-ui
+    npm install
+    npm run build
+    cd ..
+    ```
+3.  **Package Extension**: Run the packaging command.
+    ```bash
+    npx @vscode/vsce package
+    ```
+    This will generate a `.vsix` file in the root directory.
+
 ## Reporting Issues
 
 If you encounter any issues or have suggestions for improvements, please open an issue on the GitHub repository. Provide as much detail as possible, including steps to reproduce the issue.

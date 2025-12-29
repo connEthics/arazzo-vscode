@@ -1,8 +1,32 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
 import { parseDocument, isMap, isSeq, isPair, isScalar, Scalar } from 'yaml';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Arazzo VSCode extension is active');
+
+    // Register the preview command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('arazzo-vscode.openPreview', () => {
+            if (vscode.window.activeTextEditor) {
+                ArazzoPreviewPanel.createOrShow(context.extensionUri, vscode.window.activeTextEditor.document.uri);
+            } else {
+                vscode.window.showErrorMessage('No active editor found');
+            }
+        })
+    );
+
+    // Register the flowchart command
+    context.subscriptions.push(
+        vscode.commands.registerCommand('arazzo-vscode.openFlowchart', () => {
+            if (vscode.window.activeTextEditor) {
+                ArazzoFlowchartPanel.createOrShow(context.extensionUri, vscode.window.activeTextEditor.document.uri);
+            } else {
+                vscode.window.showErrorMessage('No active editor found');
+            }
+        })
+    );
 
     const symbolProvider = new YamlDocumentSymbolProvider();
     context.subscriptions.push(
@@ -40,11 +64,413 @@ export function activate(context: vscode.ExtensionContext) {
     };
 
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(validate));
-    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => validate(e.document)));
+    context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => {
+        validate(e.document);
+        if (e.document.languageId === 'yaml') {
+            ArazzoPreviewPanel.update(e.document.uri);
+            ArazzoFlowchartPanel.update(e.document.uri);
+        }
+    }));
     
+    // Listen for selection changes to auto-select workflow in flowchart
+    context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(e => {
+        if (e.textEditor.document.languageId === 'yaml') {
+            detectAndSelectWorkflow(e.textEditor);
+        }
+    }));
+
     if (vscode.window.activeTextEditor) {
         validate(vscode.window.activeTextEditor.document);
+        if (vscode.window.activeTextEditor.document.languageId === 'yaml') {
+            detectAndSelectWorkflow(vscode.window.activeTextEditor);
+        }
     }
+}
+
+function detectAndSelectWorkflow(editor: vscode.TextEditor) {
+    try {
+        const text = editor.document.getText();
+        const yamlDoc = parseDocument(text);
+        const cursorLine = editor.selection.active.line;
+        
+        if (!yamlDoc.contents || !isMap(yamlDoc.contents)) {
+            return;
+        }
+
+        const workflows = yamlDoc.contents.get('workflows', true);
+        if (workflows && isSeq(workflows)) {
+            for (const item of workflows.items) {
+                if (isMap(item)) {
+                    // Get range of the workflow item
+                    const range = (item as any).range;
+                    if (range) {
+                        const startLine = editor.document.positionAt(range[0]).line;
+                        const endLine = editor.document.positionAt(range[2] || range[1]).line;
+                        
+                        if (cursorLine >= startLine && cursorLine <= endLine) {
+                            const workflowIdNode = item.get('workflowId', true);
+                            if (workflowIdNode && isScalar(workflowIdNode)) {
+                                const workflowId = String(workflowIdNode.value);
+                                ArazzoFlowchartPanel.updateSelection(editor.document.uri, workflowId);
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e) {
+        console.error('Error detecting workflow', e);
+    }
+}
+
+/**
+ * Manages the Arazzo Preview webview panel
+ */
+class ArazzoPreviewPanel {
+    public static panels: Map<string, ArazzoPreviewPanel> = new Map();
+    private readonly _panel: vscode.WebviewPanel;
+    private readonly _extensionUri: vscode.Uri;
+    private readonly _resourceUri: vscode.Uri;
+    private _disposables: vscode.Disposable[] = [];
+
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, resourceUri: vscode.Uri) {
+        this._panel = panel;
+        this._extensionUri = extensionUri;
+        this._resourceUri = resourceUri;
+
+        // Set the webview's initial html content
+        this._update();
+
+        // Listen for when the panel is disposed
+        // This happens when the user closes the panel or when the panel is closed programmatically
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+        // Handle messages from the webview
+        this._panel.webview.onDidReceiveMessage(
+            message => {
+                switch (message.type) {
+                    case 'ready':
+                        this._updateSpec();
+                        return;
+                    case 'alert':
+                        vscode.window.showErrorMessage(message.text);
+                        return;
+                }
+            },
+            null,
+            this._disposables
+        );
+    }
+
+    public static createOrShow(extensionUri: vscode.Uri, resourceUri: vscode.Uri) {
+        const column = vscode.ViewColumn.Beside;
+        const key = resourceUri.toString();
+
+        // If we already have a panel for this resource, show it.
+        if (ArazzoPreviewPanel.panels.has(key)) {
+            ArazzoPreviewPanel.panels.get(key)?._panel.reveal(column);
+            return;
+        }
+
+        // Otherwise, create a new panel.
+        const panel = vscode.window.createWebviewPanel(
+            'arazzoPreview',
+            `Preview ${path.basename(resourceUri.fsPath)}`,
+            column,
+            {
+                // Enable javascript in the webview
+                enableScripts: true,
+
+                // And restrict the webview to only loading content from our extension's `webview-ui/build` directory.
+                localResourceRoots: [
+                    vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')
+                ]
+            }
+        );
+
+        const previewPanel = new ArazzoPreviewPanel(panel, extensionUri, resourceUri);
+        ArazzoPreviewPanel.panels.set(key, previewPanel);
+    }
+
+    public static update(resourceUri: vscode.Uri) {
+        const key = resourceUri.toString();
+        if (ArazzoPreviewPanel.panels.has(key)) {
+            ArazzoPreviewPanel.panels.get(key)?._updateSpec();
+        }
+    }
+
+    public dispose() {
+        ArazzoPreviewPanel.panels.delete(this._resourceUri.toString());
+
+        // Clean up our resources
+        this._panel.dispose();
+
+        while (this._disposables.length) {
+            const x = this._disposables.pop();
+            if (x) {
+                x.dispose();
+            }
+        }
+    }
+
+    public sendSpec(spec: any) {
+        this._panel.webview.postMessage({ type: 'update', spec: spec });
+    }
+
+    public static scrollToStep(resourceUri: vscode.Uri, stepId: string, workflowId: string) {
+        const key = resourceUri.toString();
+        if (ArazzoPreviewPanel.panels.has(key)) {
+            ArazzoPreviewPanel.panels.get(key)?._panel.webview.postMessage({ 
+                type: 'scroll-to-step', 
+                stepId: stepId, 
+                workflowId: workflowId 
+            });
+        }
+    }
+
+    private async _updateSpec() {
+        try {
+            const document = await vscode.workspace.openTextDocument(this._resourceUri);
+            const yamlDoc = parseDocument(document.getText());
+            if (yamlDoc.contents && isMap(yamlDoc.contents)) {
+                this.sendSpec(yamlDoc.toJSON());
+            }
+        } catch (e) {
+            console.error('Error updating spec', e);
+        }
+    }
+
+    private _update() {
+        const webview = this._panel.webview;
+        this._panel.webview.html = this._getHtmlForWebview(webview);
+    }
+
+    private _getHtmlForWebview(webview: vscode.Webview) {
+        // The path to the build directory of the webview
+        const buildPath = vscode.Uri.joinPath(this._extensionUri, 'webview-ui', 'build');
+        const indexHtmlPath = vscode.Uri.joinPath(buildPath, 'index.html');
+
+        let htmlContent = '';
+        try {
+            htmlContent = fs.readFileSync(indexHtmlPath.fsPath, 'utf8');
+        } catch (e) {
+            console.error('Error reading index.html', e);
+            return `<!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error</title>
+            </head>
+            <body>
+                <h1>Error loading webview</h1>
+                <p>Could not read index.html from ${indexHtmlPath.fsPath}</p>
+            </body>
+            </html>`;
+        }
+
+        // Generate nonce for CSP
+        const nonce = getNonce();
+
+        // Inject CSP meta tag
+        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">`;
+        htmlContent = htmlContent.replace('<head>', `<head>\n${cspMeta}`);
+
+        // Add nonce to script tags
+        htmlContent = htmlContent.replace(/<script/g, `<script nonce="${nonce}"`);
+
+        // Replace the script and style tags with the correct URIs
+        // The build output usually has relative paths like "./assets/..." or "/assets/..."
+        // We need to convert them to webview URIs
+
+        // 1. Get the base URI for assets
+        const assetsUri = webview.asWebviewUri(buildPath);
+
+        // 2. Replace absolute paths (starting with /) and relative paths (starting with ./)
+        // Note: Vite build output in index.html typically looks like:
+        // <script type="module" crossorigin src="/assets/index-....js"></script>
+        // <link rel="stylesheet" crossorigin href="/assets/index-....css">
+        
+        // We need to replace `src="/assets/` with `src="${assetsUri}/assets/`
+        // and `href="/assets/` with `href="${assetsUri}/assets/`
+        
+        // However, since we don't know the exact structure, a more robust way is to use a base tag
+        // or replace specific patterns.
+        
+        // Let's try replacing the specific asset patterns found in Vite builds
+        
+        // Replace src="/assets/..." or src="./assets/..."
+        htmlContent = htmlContent.replace(
+            /(src|href)="(?:\.|)\/assets\/([^"]+)"/g,
+            (match, attr, path) => {
+                const assetUri = vscode.Uri.joinPath(buildPath, 'assets', path);
+                return `${attr}="${webview.asWebviewUri(assetUri)}"`;
+            }
+        );
+
+        return htmlContent;
+    }
+}
+
+/**
+ * Manages the Arazzo Flowchart webview panel
+ */
+class ArazzoFlowchartPanel {
+    public static panels: Map<string, ArazzoFlowchartPanel> = new Map();
+    private readonly _panel: vscode.WebviewPanel;
+    private readonly _extensionUri: vscode.Uri;
+    private readonly _resourceUri: vscode.Uri;
+    private _disposables: vscode.Disposable[] = [];
+    private _currentWorkflowId: string | undefined;
+
+    private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri, resourceUri: vscode.Uri) {
+        this._panel = panel;
+        this._extensionUri = extensionUri;
+        this._resourceUri = resourceUri;
+
+        // Set the webview's initial html content
+        this._update();
+
+        // Listen for when the panel is disposed
+        this._panel.onDidDispose(() => this.dispose(), null, this._disposables);
+
+        // Handle messages from the webview
+        this._panel.webview.onDidReceiveMessage(
+            message => {
+                switch (message.type) {
+                    case 'ready':
+                        this._updateSpec();
+                        return;
+                    case 'alert':
+                        vscode.window.showErrorMessage(message.text);
+                        return;
+                    case 'step-selected':
+                        ArazzoPreviewPanel.scrollToStep(this._resourceUri, message.stepId, message.workflowId);
+                        return;
+                }
+            },
+            null,
+            this._disposables
+        );
+    }
+
+    public static createOrShow(extensionUri: vscode.Uri, resourceUri: vscode.Uri) {
+        const column = vscode.ViewColumn.Beside;
+        const key = resourceUri.toString();
+
+        if (ArazzoFlowchartPanel.panels.has(key)) {
+            ArazzoFlowchartPanel.panels.get(key)?._panel.reveal(column);
+            return;
+        }
+
+        const panel = vscode.window.createWebviewPanel(
+            'arazzoFlowchart',
+            `Flowchart ${path.basename(resourceUri.fsPath)}`,
+            column,
+            {
+                enableScripts: true,
+                localResourceRoots: [
+                    vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build')
+                ]
+            }
+        );
+
+        const flowchartPanel = new ArazzoFlowchartPanel(panel, extensionUri, resourceUri);
+        ArazzoFlowchartPanel.panels.set(key, flowchartPanel);
+    }
+
+    public static update(resourceUri: vscode.Uri) {
+        const key = resourceUri.toString();
+        if (ArazzoFlowchartPanel.panels.has(key)) {
+            ArazzoFlowchartPanel.panels.get(key)?._updateSpec();
+        }
+    }
+
+    public static updateSelection(resourceUri: vscode.Uri, workflowId: string) {
+        const key = resourceUri.toString();
+        if (ArazzoFlowchartPanel.panels.has(key)) {
+            ArazzoFlowchartPanel.panels.get(key)?.selectWorkflow(workflowId);
+        }
+    }
+
+    public selectWorkflow(workflowId: string) {
+        if (this._currentWorkflowId !== workflowId) {
+            this._currentWorkflowId = workflowId;
+            this._panel.webview.postMessage({ type: 'select-workflow', workflowId: workflowId });
+        }
+    }
+
+    public dispose() {
+        ArazzoFlowchartPanel.panels.delete(this._resourceUri.toString());
+        this._panel.dispose();
+        while (this._disposables.length) {
+            const x = this._disposables.pop();
+            if (x) {
+                x.dispose();
+            }
+        }
+    }
+
+    private async _updateSpec() {
+        try {
+            const document = await vscode.workspace.openTextDocument(this._resourceUri);
+            const yamlDoc = parseDocument(document.getText());
+            if (yamlDoc.contents && isMap(yamlDoc.contents)) {
+                this._panel.webview.postMessage({ 
+                    type: 'update-flowchart', 
+                    spec: yamlDoc.toJSON(),
+                    workflowId: this._currentWorkflowId 
+                });
+            }
+        } catch (e) {
+            console.error('Error updating spec', e);
+        }
+    }
+
+    private _update() {
+        const webview = this._panel.webview;
+        this._panel.webview.html = this._getHtmlForWebview(webview);
+    }
+
+    private _getHtmlForWebview(webview: vscode.Webview) {
+        // Reuse the same HTML generation logic as PreviewPanel
+        // We can refactor this to a shared helper function later
+        const buildPath = vscode.Uri.joinPath(this._extensionUri, 'webview-ui', 'build');
+        const indexHtmlPath = vscode.Uri.joinPath(buildPath, 'index.html');
+
+        let htmlContent = '';
+        try {
+            htmlContent = fs.readFileSync(indexHtmlPath.fsPath, 'utf8');
+        } catch (e) {
+            return `Error loading webview`;
+        }
+
+        const nonce = getNonce();
+        const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">`;
+        htmlContent = htmlContent.replace('<head>', `<head>\n${cspMeta}`);
+        htmlContent = htmlContent.replace(/<script/g, `<script nonce="${nonce}"`);
+
+        const assetsUri = webview.asWebviewUri(buildPath);
+        htmlContent = htmlContent.replace(
+            /(src|href)="(?:\.|)\/assets\/([^"]+)"/g,
+            (match, attr, path) => {
+                const assetUri = vscode.Uri.joinPath(buildPath, 'assets', path);
+                return `${attr}="${webview.asWebviewUri(assetUri)}"`;
+            }
+        );
+
+        return htmlContent;
+    }
+}
+
+function getNonce() {
+    let text = '';
+    const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < 32; i++) {
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return text;
 }
 
 class YamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
