@@ -40,10 +40,10 @@ export default function MermaidDiagram({
     mermaid.initialize({
       startOnLoad: false,
       theme: isDark ? 'dark' : 'default',
-      securityLevel: 'loose',
+      securityLevel: 'strict',
       flowchart: {
         useMaxWidth: false,
-        htmlLabels: true,
+        htmlLabels: false,
         curve: 'basis',
       },
       sequence: {

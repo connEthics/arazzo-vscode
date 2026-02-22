@@ -1,5 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
+import * as path from 'path';
+import { waitFor } from './helpers';
 
 suite('Arazzo Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
@@ -24,12 +26,14 @@ workflows:
 			content,
 			language: 'yaml'
 		});
-		
-		// Wait for diagnostics to update
-		await new Promise(resolve => setTimeout(resolve, 1000));
-		
+
+		await waitFor(() => {
+			const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+			return diagnostics.length === 0;
+		});
+
 		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-		assert.strictEqual(diagnostics.length, 0, `Expected 0 diagnostics, got ${diagnostics.length}: ${JSON.stringify(diagnostics)}`);
+		assert.strictEqual(diagnostics.length, 0, `Expected 0 diagnostics, got ${diagnostics.length}: ${JSON.stringify(diagnostics.map(d => d.message))}`);
 	});
 
 	test('Missing required fields should report errors', async () => {
@@ -42,14 +46,44 @@ arazzo: 1.0.1
 			language: 'yaml'
 		});
 
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		await waitFor(() => {
+			const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+			return diagnostics.length >= 3;
+		});
 
 		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
 		const messages = diagnostics.map(d => d.message);
-		
+
 		assert.ok(messages.some(m => m.includes('Missing required field: info')), 'Missing info error not found');
 		assert.ok(messages.some(m => m.includes('Missing required field: sourceDescriptions')), 'Missing sourceDescriptions error not found');
 		assert.ok(messages.some(m => m.includes('Missing required field: workflows')), 'Missing workflows error not found');
+	});
+
+	test('Non-Arazzo YAML should have zero diagnostics', async () => {
+		const fixturePath = path.resolve(__dirname, '../../src/test/fixtures/non-arazzo.yaml');
+		const doc = await vscode.workspace.openTextDocument(fixturePath);
+
+		// Wait to ensure no diagnostics fire (negative test)
+		await waitFor(() => true, 500);
+
+		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+		assert.strictEqual(diagnostics.length, 0, `Expected 0 diagnostics on non-Arazzo file, got ${diagnostics.length}: ${JSON.stringify(diagnostics.map(d => d.message))}`);
+	});
+
+	test('Unrecognized Arazzo version should produce warning', async () => {
+		const fixturePath = path.resolve(__dirname, '../../src/test/fixtures/unknown-version.arazzo.yaml');
+		const doc = await vscode.workspace.openTextDocument(fixturePath);
+
+		await waitFor(() => {
+			const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+			return diagnostics.some(d => d.code === 'arazzo-version');
+		});
+
+		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+		const versionWarning = diagnostics.find(d => d.code === 'arazzo-version');
+		assert.ok(versionWarning, 'Version warning diagnostic not found');
+		assert.strictEqual(versionWarning.severity, vscode.DiagnosticSeverity.Warning);
+		assert.ok(versionWarning.message.includes('2.0.0'), 'Warning should mention the version');
 	});
 
 	test('Outline should provide correct symbols', async () => {
@@ -75,10 +109,13 @@ workflows:
 			language: 'yaml'
 		});
 
-		// Wait for extension to activate and register provider
-		await new Promise(resolve => setTimeout(resolve, 1000));
+		let symbols: vscode.DocumentSymbol[] | undefined;
+		await waitFor(() => {
+			// Symbol provider should be available after extension activates
+			return true;
+		}, 1000);
 
-		const symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
+		symbols = await vscode.commands.executeCommand<vscode.DocumentSymbol[]>(
 			'vscode.executeDocumentSymbolProvider',
 			doc.uri
 		);

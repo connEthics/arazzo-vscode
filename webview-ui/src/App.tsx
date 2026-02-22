@@ -11,23 +11,36 @@ const emptySpec: ArazzoSpec = {
   workflows: []
 };
 
-// @ts-ignore
-const vscode = window.acquireVsCodeApi ? window.acquireVsCodeApi() : null;
+declare function acquireVsCodeApi(): { postMessage(msg: unknown): void; getState(): unknown; setState(state: unknown): void; };
+const vscode = typeof acquireVsCodeApi === 'function' ? acquireVsCodeApi() : null;
 
 function App() {
   const [spec, setSpec] = useState<ArazzoSpec>(emptySpec);
   const [isDark, setIsDark] = useState(true);
-  const [viewMode, setViewMode] = useState<'documentation' | 'flowchart'>('documentation');
+  const [viewMode, setViewMode] = useState<'documentation' | 'flowchart' | 'error'>('documentation');
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | undefined>(undefined);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     // Listen for messages from the extension
     const handleMessage = (event: MessageEvent) => {
       const message = event.data;
       if (message.type === 'update') {
+        if (!message.spec) {
+          setError('Failed to load document data');
+          setViewMode('error');
+          return;
+        }
+        setError(null);
         setSpec(message.spec);
         setViewMode('documentation');
       } else if (message.type === 'update-flowchart') {
+        if (!message.spec) {
+          setError('Failed to load document data');
+          setViewMode('error');
+          return;
+        }
+        setError(null);
         setSpec(message.spec);
         setViewMode('flowchart');
         if (message.workflowId) {
@@ -99,9 +112,30 @@ function App() {
       }
   };
 
+  const handleRetry = () => {
+    setError(null);
+    setViewMode('documentation');
+    if (vscode) {
+      vscode.postMessage({ type: 'ready' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[var(--vscode-editor-background)] text-[var(--vscode-editor-foreground)]">
-      {viewMode === 'flowchart' ? (
+      {viewMode === 'error' ? (
+        <div className="flex items-center justify-center p-4">
+          <div className="p-4 rounded border" style={{ borderColor: 'var(--vscode-inputValidation-errorBorder, #be1100)', backgroundColor: 'var(--vscode-inputValidation-errorBackground, #5a1d1d)' }}>
+            <p className="mb-2" style={{ color: 'var(--vscode-errorForeground, #f48771)' }}>{error || 'An error occurred'}</p>
+            <button
+              onClick={handleRetry}
+              className="px-3 py-1 rounded text-sm"
+              style={{ backgroundColor: 'var(--vscode-button-background)', color: 'var(--vscode-button-foreground)' }}
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : viewMode === 'flowchart' ? (
         <FlowchartView 
             spec={spec} 
             isDark={isDark} 

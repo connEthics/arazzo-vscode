@@ -35,10 +35,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "arazzo-vscode.helloWorld",
-        "title": "Hello World"
-      },
-      {
         "command": "arazzo-vscode.openPreview",
         "title": "Open Arazzo Preview",
         "icon": "$(preview)"
