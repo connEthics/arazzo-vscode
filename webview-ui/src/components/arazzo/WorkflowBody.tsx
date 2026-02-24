@@ -1,15 +1,10 @@
-import type { Workflow, WorkflowInputs } from '../../types/arazzo';
+import type { Workflow } from '../../types/arazzo';
 import { SectionHeader, Badge } from '@/components/primitives';
 import { InputContent, OutputContent } from '../DetailViews';
 
 interface WorkflowBodyProps {
     workflow: Workflow;
     isDark?: boolean;
-    editable?: boolean;
-    onUpdate?: (updates: Partial<Workflow>) => void;
-    onReorderInput?: (startIndex: number, endIndex: number) => void;
-    onReorderOutput?: (startIndex: number, endIndex: number) => void;
-    expressionSuggestions?: any[];
 }
 
 /**
@@ -19,11 +14,6 @@ interface WorkflowBodyProps {
 export default function WorkflowBody({
     workflow,
     isDark = false,
-    editable = false,
-    onUpdate,
-    onReorderInput,
-    onReorderOutput,
-    expressionSuggestions = []
 }: WorkflowBodyProps) {
     const textClass = isDark ? 'text-white' : 'text-gray-900';
     const mutedClass = isDark ? 'text-slate-400' : 'text-gray-500';
@@ -42,16 +32,12 @@ export default function WorkflowBody({
                     isDark={isDark}
                 />
                 <InputContent
-                    input={{ name: 'Workflow Inputs', schema: {} }}
+                    input={{ name: 'Workflow Inputs', schema: workflow.inputs?.properties || {} }}
                     workflowInputs={workflow.inputs}
                     isDark={isDark}
                     textClass={textClass}
                     mutedClass={mutedClass}
                     codeBgClass={codeBgClass}
-                    editable={editable}
-                    onUpdate={(inputs: WorkflowInputs) => onUpdate?.({ inputs })}
-                    onReorder={onReorderInput}
-                    expressionSuggestions={expressionSuggestions}
                 />
             </div>
 
@@ -69,10 +55,6 @@ export default function WorkflowBody({
                     textClass={textClass}
                     mutedClass={mutedClass}
                     codeBgClass={codeBgClass}
-                    editable={editable}
-                    onUpdate={(outputs: Record<string, string>) => onUpdate?.({ outputs })}
-                    onReorder={onReorderOutput}
-                    expressionSuggestions={expressionSuggestions}
                 />
             </div>
         </div>

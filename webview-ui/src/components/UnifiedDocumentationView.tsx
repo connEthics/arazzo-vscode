@@ -138,14 +138,11 @@ function UnifiedDocumentationView({
                   Sequence Diagram
                 </h3>
                 <div className={`rounded-xl border overflow-hidden ${theme.card} p-4`}>
-                  <MermaidDiagram 
-                    chart={mermaidCharts[workflow.workflowId]} 
-                    isDark={isDark} 
+                  <MermaidDiagram
+                    chart={mermaidCharts[workflow.workflowId]}
+                    isDark={isDark}
                     steps={workflow.steps}
-                    sources={spec.sourceDescriptions}
-                    workflowInputs={workflow.inputs}
-                    workflowOutputs={workflow.outputs}
-                    onStepSelect={(step) => step && onStepClick?.(step.stepId)}
+                    onNodeClick={(stepId: string) => onStepClick?.(stepId)}
                   />
                 </div>
               </div>

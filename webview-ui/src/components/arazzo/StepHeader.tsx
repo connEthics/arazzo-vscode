@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Step } from '../../types/arazzo';
-import { Badge, EditableField } from '@/components/primitives';
+import { Badge } from '@/components/primitives';
 import { extractHttpMethod, getMethodBadgeVariant, type HttpMethod } from '../../lib/arazzo-utils';
 
 export type StepHeaderVariant = 'node' | 'card' | 'inspector';
@@ -11,8 +11,6 @@ interface StepHeaderProps {
     index?: number;
     sourceName?: string;
     isDark?: boolean;
-    editable?: boolean;
-    onUpdate?: (updates: Partial<Step>) => void;
     className?: string;
     style?: React.CSSProperties;
     onClick?: () => void;
@@ -20,7 +18,7 @@ interface StepHeaderProps {
 }
 
 /**
- * Unified StepHeader component used across Visualization (Nodes), 
+ * Unified StepHeader component used across Visualization (Nodes),
  * Documentation (Cards), and Inspection views.
  */
 export default function StepHeader({
@@ -29,8 +27,6 @@ export default function StepHeader({
     index,
     sourceName,
     isDark = false,
-    editable = false,
-    onUpdate,
     className = '',
     style,
     onClick
@@ -83,21 +79,10 @@ export default function StepHeader({
                         Step
                     </Badge>
 
-                    {/* Step ID - Editable if needed */}
-                    {editable && onUpdate && variant === 'inspector' ? (
-                        <EditableField
-                            value={step.stepId}
-                            onChange={(val: string) => onUpdate({ stepId: val })}
-                            activationMode="hover"
-                            isDark={isDark}
-                            className="font-semibold text-sm"
-                            compact
-                        />
-                    ) : (
-                        <h4 className={`font-semibold ${variant === 'node' ? 'text-sm' : 'text-base'} truncate`}>
-                            {step.stepId}
-                        </h4>
-                    )}
+                    {/* Step ID */}
+                    <h4 className={`font-semibold ${variant === 'node' ? 'text-sm' : 'text-base'} truncate`}>
+                        {step.stepId}
+                    </h4>
 
                     {/* HTTP Method Badge */}
                     {method && (
@@ -112,31 +97,11 @@ export default function StepHeader({
 
                     {/* Operation Path/ID or Workflow ID */}
                     {(operationName || step.workflowId) && variant !== 'node' && (
-                        <div className="flex items-center">
-                            {editable && onUpdate && variant === 'inspector' ? (
-                                <EditableField
-                                    value={step.operationId || step.workflowId || ''}
-                                    onChange={(val: string) => {
-                                        if (step.workflowId) {
-                                            onUpdate({ workflowId: val });
-                                        } else {
-                                            onUpdate({ operationId: val });
-                                        }
-                                    }}
-                                    isDark={isDark}
-                                    className="font-mono text-xs"
-                                    compact
-                                    activationMode="hover"
-                                    badge={step.workflowId ? <Badge variant="workflow" size="xs">Workflow</Badge> : undefined}
-                                />
-                            ) : (
-                                <div className="flex items-center gap-1">
-                                    {step.workflowId && <Badge variant="workflow" size="xs" isDark={isDark}>Workflow</Badge>}
-                                    <code className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
-                                        {operationName || step.workflowId}
-                                    </code>
-                                </div>
-                            )}
+                        <div className="flex items-center gap-1">
+                            {step.workflowId && <Badge variant="workflow" size="xs" isDark={isDark}>Workflow</Badge>}
+                            <code className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
+                                {operationName || step.workflowId}
+                            </code>
                         </div>
                     )}
 
@@ -149,26 +114,10 @@ export default function StepHeader({
                 </div>
 
                 {/* Description line */}
-                {(variant === 'card' || (variant === 'inspector' && !editable)) && step.description && (
+                {(variant === 'card' || variant === 'inspector') && step.description && (
                     <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'} line-clamp-1 truncate`}>
                         {step.description}
                     </p>
-                )}
-
-                {/* Editable Description for Inspector */}
-                {variant === 'inspector' && editable && onUpdate && (
-                    <div className="mt-1">
-                        <EditableField
-                            value={step.description || ''}
-                            onChange={(val: string) => onUpdate({ description: val })}
-                            placeholder="Add description..."
-                            type="textarea"
-                            isDark={isDark}
-                            className={`text-xs ${isDark ? 'text-slate-400' : 'text-gray-500'}`}
-                            compact
-                            activationMode="hover"
-                        />
-                    </div>
                 )}
             </div>
 

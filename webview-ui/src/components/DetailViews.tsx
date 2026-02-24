@@ -1,9 +1,7 @@
 import { memo } from 'react';
 import type { Step, SourceDescription, WorkflowInputs } from '../types/arazzo';
 import { StepBody, StepHeader, SchemaViewer } from './arazzo';
-import { Badge, MarkdownText, PropertyList, EditableListItem } from './primitives';
-import type { ExpressionSuggestion } from './ExpressionInput';
-import WorkflowInputsEditor from './WorkflowInputsEditor';
+import { Badge, MarkdownText, PropertyList } from './primitives';
 
 // --- Step Content ---
 interface StepContentProps {
@@ -15,10 +13,6 @@ interface StepContentProps {
   codeBgClass: string;
   onStepClick?: (stepId: string) => void;
   onRefClick?: (reference: string) => void;
-  editable?: boolean;
-  onStepUpdate?: (updates: Partial<Step>) => void;
-  availableSteps?: string[];
-  expressionSuggestions?: ExpressionSuggestion[];
 }
 
 export const StepContent = memo(function StepContent({
@@ -27,10 +21,6 @@ export const StepContent = memo(function StepContent({
   isDark,
   onStepClick,
   onRefClick,
-  editable = false,
-  onStepUpdate,
-  availableSteps,
-  expressionSuggestions
 }: StepContentProps) {
   return (
     <div className="space-y-6">
@@ -40,8 +30,6 @@ export const StepContent = memo(function StepContent({
         variant="inspector"
         sourceName={sourceForStep?.name}
         isDark={isDark}
-        editable={editable}
-        onUpdate={onStepUpdate}
       />
 
       {/* Body */}
@@ -53,10 +41,6 @@ export const StepContent = memo(function StepContent({
           isDark={isDark}
           onStepClick={onStepClick}
           onRefClick={onRefClick}
-          editable={editable}
-          onStepUpdate={onStepUpdate}
-          availableSteps={availableSteps}
-          expressionSuggestions={expressionSuggestions}
           forceExpanded
         />
       </div>
@@ -111,36 +95,13 @@ interface InputContentProps {
   mutedClass: string;
   codeBgClass: string;
   workflowInputs?: WorkflowInputs;
-  editable?: boolean;
-  onUpdate?: (inputs: WorkflowInputs) => void;
-  onReorder?: (startIndex: number, endIndex: number) => void;
-  expressionSuggestions?: ExpressionSuggestion[];
 }
 
 export const InputContent = memo(function InputContent({
   input,
   isDark,
   mutedClass,
-  workflowInputs,
-  editable = false,
-  onUpdate,
-  onReorder,
-  expressionSuggestions
 }: InputContentProps) {
-  // If we have full workflow inputs and editable mode, show the editor
-  if (editable && workflowInputs && onUpdate) {
-    return (
-      <WorkflowInputsEditor
-        inputs={workflowInputs}
-        onChange={onUpdate}
-        isDark={isDark}
-        onReorder={onReorder}
-        expressionSuggestions={expressionSuggestions}
-      />
-    );
-  }
-
-  // Read-only view
   const hasProperties = input.schema && Object.keys(input.schema).length > 0;
 
   return (
@@ -174,10 +135,6 @@ interface OutputContentProps {
   mutedClass: string;
   codeBgClass: string;
   workflowOutputs?: Record<string, string>;
-  editable?: boolean;
-  onUpdate?: (outputs: Record<string, string>) => void;
-  onReorder?: (startIndex: number, endIndex: number) => void;
-  expressionSuggestions?: ExpressionSuggestion[];
 }
 
 export const OutputContent = memo(function OutputContent({
@@ -185,46 +142,7 @@ export const OutputContent = memo(function OutputContent({
   isDark,
   textClass,
   mutedClass,
-  workflowOutputs,
-  editable = false,
-  onUpdate,
-  expressionSuggestions
 }: OutputContentProps) {
-  // If editable and we have all outputs, show editable list
-  if (editable && workflowOutputs && onUpdate) {
-    return (
-      <div className="space-y-2">
-        {Object.entries(workflowOutputs).map(([key, value], idx) => (
-          <EditableListItem
-            key={idx}
-            type="output"
-            item={{ key, value }}
-            onChange={(updated) => {
-              const newOutputs = { ...workflowOutputs };
-              if (updated.key !== key) delete newOutputs[key];
-              newOutputs[updated.key] = updated.value;
-              onUpdate(newOutputs);
-            }}
-            onDelete={() => {
-              const newOutputs = { ...workflowOutputs };
-              delete newOutputs[key];
-              onUpdate(newOutputs);
-            }}
-            isDark={isDark}
-            expressionSuggestions={expressionSuggestions}
-          />
-        ))}
-        <button
-            onClick={() => onUpdate({ ...workflowOutputs, [`output${Object.keys(workflowOutputs).length + 1}`]: '' })}
-            className="text-xs text-indigo-500 hover:text-indigo-400 flex items-center gap-1 mt-2"
-        >
-            + Add Output
-        </button>
-      </div>
-    );
-  }
-
-  // Read-only view
   // If we have allOutputs, show them all
   if (output.allOutputs) {
     const items = Object.entries(output.allOutputs).map(([key, value]) => ({
