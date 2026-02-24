@@ -3,7 +3,7 @@
 [![Version](https://img.shields.io/visual-studio-marketplace/v/connethics.arazzo-vscode)](https://marketplace.visualstudio.com/items?itemName=connethics.arazzo-vscode)
 [![Installs](https://img.shields.io/visual-studio-marketplace/i/connethics.arazzo-vscode)](https://marketplace.visualstudio.com/items?itemName=connethics.arazzo-vscode)
 
-**The VS Code editor for [Arazzo](https://spec.openapis.org/arazzo/latest.html) specifications** — live preview, flowchart diagrams, validation, and navigation for your multi-step API workflows.
+**Author, visualize, and validate [Arazzo](https://spec.openapis.org/arazzo/latest.html) API workflows without leaving VS Code.** Catch errors before they reach your API pipeline with live preview, flowchart diagrams, real-time validation, and smart navigation.
 
 ![Arazzo VSCode Demo](images/demo.png)
 
@@ -86,9 +86,18 @@ MIT License — see the [LICENSE](LICENSE) file for details.
 
 If you find this extension useful, we'd love to hear from you! Send us a virtual postcard at **hello@connethics.com** — tell us who you are, where you're from, and how you use Arazzo. We collect every message and it truly makes our day.
 
+## Telemetry
+
+This extension collects **no telemetry**, analytics, or usage data.
+
 ## Release Notes
 
 See the full [CHANGELOG](CHANGELOG.md) for details.
+
+### 1.0.2
+
+- License updated to MIT
+- No telemetry disclosure
 
 ### 0.0.3
 
