@@ -3,6 +3,7 @@
   "publisher": "connethics",
   "displayName": "Arazzo VSCode",
   "pricing": "Free",
+  "license": "MIT",
   "description": "VS Code extension for Arazzo YAML files with navigation, autocompletion, and validation.",
   "icon": "images/icon.png",
   "repository": {
