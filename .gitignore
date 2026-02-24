@@ -17,3 +17,9 @@ node_modules
 webview-ui/node_modules
 webview-ui/build
 webview-ui/.DS_Store
+
+# Agents
+.claude/*
+./specify/*
+.automaker/*
+.gitignore

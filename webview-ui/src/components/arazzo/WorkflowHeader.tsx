@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Workflow } from '../../types/arazzo';
-import { Badge, EditableField } from '@/components/primitives';
+import { Badge } from '@/components/primitives';
 
 export type WorkflowHeaderVariant = 'card' | 'inspector' | 'header';
 
@@ -9,8 +9,6 @@ interface WorkflowHeaderProps {
     variant?: WorkflowHeaderVariant;
     index?: number;
     isDark?: boolean;
-    editable?: boolean;
-    onUpdate?: (updates: Partial<Workflow>) => void;
     className?: string;
     style?: React.CSSProperties;
     onClick?: () => void;
@@ -24,8 +22,6 @@ export default function WorkflowHeader({
     variant = 'header',
     index,
     isDark = false,
-    editable = false,
-    onUpdate,
     className = '',
     style,
     onClick,
@@ -52,60 +48,21 @@ export default function WorkflowHeader({
                     </Badge>
                 )}
 
-                {editable && onUpdate ? (
-                    <EditableField
-                        value={workflow.summary || ''}
-                        onChange={(val: string) => onUpdate({ summary: val })}
-                        placeholder="Workflow Summary"
-                        isDark={isDark}
-                        className="text-2xl font-bold"
-                        compact
-                        activationMode="click"
-                    />
-                ) : (
-                    <h2 className="text-2xl font-bold print:text-xl truncate">
-                        {title}
-                    </h2>
-                )}
+                <h2 className="text-2xl font-bold print:text-xl truncate">
+                    {title}
+                </h2>
             </div>
 
             <div className="flex items-center gap-2 mb-3">
-                {editable && onUpdate ? (
-                    <div className="flex items-center gap-2">
-                        <Badge variant="workflow" size="xs">ID</Badge>
-                        <EditableField
-                            value={workflow.workflowId}
-                            onChange={(val: string) => onUpdate({ workflowId: val })}
-                            isDark={isDark}
-                            className="font-mono text-sm"
-                            compact
-                            activationMode="hover"
-                        />
-                    </div>
-                ) : (
-                    <code className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'} font-mono`}>
-                        {workflow.workflowId}
-                    </code>
-                )}
+                <code className={`text-sm ${isDark ? 'text-slate-400' : 'text-gray-500'} font-mono`}>
+                    {workflow.workflowId}
+                </code>
             </div>
 
-            {editable && onUpdate ? (
-                <EditableField
-                    value={workflow.description || ''}
-                    onChange={(val: string) => onUpdate({ description: val })}
-                    placeholder="Add workflow description..."
-                    type="textarea"
-                    isDark={isDark}
-                    className={`mt-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}
-                    compact
-                    activationMode="click"
-                />
-            ) : (
-                workflow.description && (
-                    <p className={`mt-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                        {workflow.description}
-                    </p>
-                )
+            {workflow.description && (
+                <p className={`mt-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
+                    {workflow.description}
+                </p>
             )}
         </div>
     );

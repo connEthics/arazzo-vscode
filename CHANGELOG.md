@@ -2,6 +2,14 @@
 
 All notable changes to the "arazzo-vscode" extension will be documented in this file.
 
+## [1.0.2] - 2026-02-23
+
+### Changed
+- **License**: Updated to MIT license.
+
+### Security
+- **No Telemetry**: This extension collects no telemetry, analytics, or usage data.
+
 ## [0.0.3] - 2025-12-28
 
 ### Added

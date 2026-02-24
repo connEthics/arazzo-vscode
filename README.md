@@ -1,56 +1,115 @@
 # Arazzo VSCode
 
-VS Code extension for Arazzo YAML files with navigation, autocompletion, and validation.
+[![Version](https://img.shields.io/visual-studio-marketplace/v/connethics.arazzo-vscode)](https://marketplace.visualstudio.com/items?itemName=connethics.arazzo-vscode)
+[![Installs](https://img.shields.io/visual-studio-marketplace/i/connethics.arazzo-vscode)](https://marketplace.visualstudio.com/items?itemName=connethics.arazzo-vscode)
+
+**Author, visualize, and validate [Arazzo](https://spec.openapis.org/arazzo/latest.html) API workflows without leaving VS Code.** Catch errors before they reach your API pipeline with live preview, flowchart diagrams, real-time validation, and smart navigation.
 
 ![Arazzo VSCode Demo](images/demo.png)
 
+## What is Arazzo?
+
+[Arazzo](https://spec.openapis.org/arazzo/latest.html) is a specification by the **OpenAPI Initiative** for describing multi-step API workflows. It lets you orchestrate sequences of API calls with dependencies, conditions, and data passing between steps — all in a declarative YAML format.
+
+This extension brings first-class Arazzo support to VS Code, so you can author, visualize, and validate your workflow specifications without leaving your editor.
+
+## Quick Start
+
+1. **Install** the extension from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=connethics.arazzo-vscode)
+2. **Open** any `.yaml` file containing an Arazzo specification
+3. **Preview** — click the preview icon in the editor toolbar, or run `Open Arazzo Preview` from the Command Palette
+4. **Flowchart** — click the graph icon, or run `Open Arazzo Flowchart` to visualize your workflow as a diagram
+
+Both views update in real-time as you edit your YAML.
+
 ## Features
 
-- **Live Preview**: Visualize your Arazzo specifications with a real-time, interactive preview.
-    - Opens side-by-side with your code.
-    - Supports multiple tabs for different files.
-    - Native VS Code theming (Light/Dark/High Contrast).
-    - Interactive navigation (Table of Contents, "GoTo" step links).
-- **Flowchart View**: Visualize your workflows as diagrams.
-    - Opens in a dedicated panel.
-    - **Auto-sync**: Automatically displays the workflow you are currently editing.
-    - **Interactive**: Select different workflows manually from the dropdown.
-- **Outline Navigation**: Easily navigate through the YAML structure using the Outline view.
-- **Autocompletion**: Basic autocompletion for YAML keys and values.
-- **Validation**: Real-time validation of YAML syntax.
-- **Indentation**: Proper indentation support for YAML files.
+### Live Documentation Preview
+
+Visualize your entire Arazzo specification as interactive documentation, side-by-side with your code.
+
+- **Real-time updates** — the preview refreshes as you type
+- **Multi-tab support** — view multiple specifications simultaneously
+- **Theme-aware** — adapts to your VS Code theme (Light, Dark, High Contrast)
+- **Interactive navigation** — Table of Contents, step-to-step links, and deep linking
+
+### Flowchart View
+
+See your workflows as visual diagrams powered by Mermaid.js.
+
+- **Auto-sync** — automatically displays the workflow under your cursor
+- **Click-to-navigate** — click a step in the flowchart to jump to it in both the editor and the documentation preview
+- **Manual selection** — switch between workflows using the dropdown
+
+### Validation
+
+Real-time diagnostics as you type — catch errors before they reach your API pipeline.
+
+- YAML syntax validation
+- Arazzo-specific structural checks (missing fields, invalid references)
+- Inline error/warning markers in the editor
+
+### Outline Navigation
+
+Navigate large specifications using the VS Code Outline view — workflows, steps, parameters, and components are all structured as symbols.
+
+### Autocompletion
+
+Context-aware YAML completion for Arazzo keywords and structure.
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `Open Arazzo Preview` | Open the interactive documentation panel |
+| `Open Arazzo Flowchart` | Open the workflow diagram panel |
 
 ## Playground
 
-You can visualize your Arazzo specifications using our online playground: [https://arazzo.connethics.com/](https://arazzo.connethics.com/)
-
-## Repository
-
-The source code is available on GitHub: [https://github.com/connEthics/arazzo-vscode](https://github.com/connEthics/arazzo-vscode)
+Try Arazzo without installing anything — visualize your specifications in our **[online playground](https://arazzo.connethics.com/)**.
 
 ## Requirements
 
-This extension requires VS Code 1.107.0 or newer.
-
-## Extension Settings
-
-This extension currently does not contribute any settings.
-
-## Known Issues
-
-- Autocompletion is currently limited to basic keywords.
+- VS Code 1.90.0 or newer
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to propose changes and participate in the project.
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for details.
+
+Source code: [github.com/connEthics/arazzo-vscode](https://github.com/connEthics/arazzo-vscode)
 
 ## License
 
-This project is available for non-commercial use. Commercial usage requires a separate license. See the [LICENSE](LICENSE) file for details.
+MIT License — see the [LICENSE](LICENSE) file for details.
+
+### Postcardware
+
+If you find this extension useful, we'd love to hear from you! Send us a virtual postcard at **hello@connethics.com** — tell us who you are, where you're from, and how you use Arazzo. We collect every message and it truly makes our day.
+
+## Telemetry
+
+This extension collects **no telemetry**, analytics, or usage data.
 
 ## Release Notes
 
+See the full [CHANGELOG](CHANGELOG.md) for details.
+
+### 1.0.2
+
+- License updated to MIT
+- No telemetry disclosure
+
+### 0.0.3
+
+- Synchronized views: clicking a step in the Flowchart scrolls to it in the Documentation view
+- Marketplace metadata for better discoverability
+
+### 0.0.2
+
+- Flowchart View with auto-sync and Mermaid.js rendering
+- Interactive Preview Panel with live updates, multi-tab, and theme support
+
 ### 0.0.1
 
-Initial release with Outline, Autocompletion, and Validation support.
+- Initial release with Outline, Autocompletion, and Validation support
 

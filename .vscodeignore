@@ -16,7 +16,16 @@ vsc-extension-quickstart.md
 context/**
 .vscode-test.mjs
 
-# Webview UI exclusions
+# Webview UI exclusions (include only the production build)
 webview-ui/**
 !webview-ui/build/**
+
+# Dev tooling — must never ship in the VSIX
+.claude/**
+.planning/**
+.specify/**
+.automaker/**
+CLAUDE.md
+SUPPORT.md
+CONTRIBUTING.md
 
