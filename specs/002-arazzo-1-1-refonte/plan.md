@@ -256,6 +256,32 @@ R2,R3,R4 ─> E1 ──────┼─> A2        │
 
 Parallélisme maximal : Vague 0 (6 agents), puis C1, D1 et E1 (3 agents), puis V1, G1, W0 et A2.
 
+**Ordre d'exécution validé (16/11)** : vagues 0 et 1 enchaînées, sans pause entre les deux.
+- Vague 0 : 6 sous-agents en parallèle (R1 à R5, B1). Chaque agent écrit dans `specs/002-arazzo-1-1-refonte/research/` (vscode) ou dans `brand/`.
+- Vague 1 : C1 et E1 en parallèle, puis D1. Pour B1, on applique les recommandations par défaut (palette ConnEthics, nom proposé) en attendant la validation.
+- Commit et push par repo à la fin de chaque lot.
+- **Arrêt** à la livraison des maquettes D1, pour validation. On ne lance ni G1 ni la vague 2.
+
+**Avancement au 16/11, 16 h UTC** : la vague 0 est terminée.
+- Livrables R1 à R5 et B1 présents dans `specs/002-arazzo-1-1-refonte/`, non commités.
+- R1 a été coupé par la limite d'usage, mais son livrable `01-spec-delta-1.1.md` est complet (sections a à e) et les schémas officiels sont dans `research/schemas/`.
+
+**Décisions issues de la vague 0, à appliquer en vague 1** :
+- `packages/arazzo-core` et `packages/arazzo-flow` sous licence **MIT** (défaut, en attente de confirmation), pour pouvoir les embarquer dans l'extension MIT.
+- Règles de C1 : la table §c de `01-spec-delta-1.1.md`.
+- Critères des exemples E1 :
+  - par défaut, `simple` avec JSON Pointer, seule forme portable sur les 5 runners (R4) ;
+  - les Selectors JSONPath servent seulement d'illustration 1.1, avec une note sur la limite des runners.
+- `mcp-travel-booking` : deux workflows, `quote_trip` (lecture seule) et `book_trip`, plus `mcp-tools.json` au format R3.
+- Recettes E1 : Prism 5.16 + Respect 2.79 épinglés pour le HTTP ; arazzo-cli + Kafka + Microcks pour `receive` ; limite documentée pour `send`. Jentic n'est pas utilisable en CI (code de sortie toujours 0).
+- D1 : les variables `--af-*` de R5 sont définies à partir des tokens `--ce-*` de B1. On ajoute `worker-src` au CSP du webview.
+
+**Étapes suivantes** :
+1. Commit et push de la vague 0 (arazzo-vscode).
+2. C1 et E1 en parallèle (arazzo-demo).
+3. D1.
+4. Commit et push, puis arrêt pour la validation des maquettes et des décisions de `brand/BRAND.md`.
+
 **Points de validation utilisateur** : fin de B1 (nom, palette, licence), fin de D1 (maquettes du graphe) et relecture des textes W1/W2 avant publication.
 
 ---
