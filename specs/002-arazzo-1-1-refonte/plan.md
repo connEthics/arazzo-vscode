@@ -300,3 +300,15 @@ Parallélisme maximal : Vague 0 (6 agents), puis C1, D1 et E1 (3 agents), puis V
   - `npm run build` et `npm run lint` ;
   - vérifier hreflang, sitemap et JSON-LD (validateur Schema.org) ;
   - captures Playwright mobile (390 px) et desktop de `/arazzo`, `/fr/arazzo` et des articles.
+
+---
+
+## Décisions utilisateur du 16/11 (fin de vague 1)
+
+- **Nom** : « Arazzo Studio by ConnEthics » pour l'app web, « Arazzo for VS Code — by ConnEthics » pour l'extension.
+- **Licences** :
+  - paquets `@connethics/arazzo-core` et `arazzo-flow` en **MIT** ;
+  - app arazzo-demo en **source-available**. Proposition à confirmer : FSL-1.1-MIT. L'accroche « Open Source • Free Forever » est à reformuler, par exemple « Free to use · MIT core ».
+- **Couleurs dans VS Code** : les couleurs sémantiques du graphe suivent le **thème VS Code** (`--vscode-charts-*`, `--vscode-testing-*`, etc.). La palette ConnEthics reste réservée au web (demo, website).
+- **Maquettes D1** : validées. On applique les choix par défaut de `design/UI-SPEC.md` §14 et on corrige le conflit de pointillés entre `dependsOn` et les arêtes d'échec.
+- **Suite** : lancement de la vague 2.
