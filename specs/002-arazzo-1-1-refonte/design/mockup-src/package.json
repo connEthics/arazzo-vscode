@@ -1,0 +1,25 @@
+{
+  "name": "arazzo-flow-mockups",
+  "version": "0.1.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "Maquettes D1 du graphe Arazzo (ConnEthics) : React 19 + @xyflow/react 12 + elkjs (worker inline), build mono-fichier.",
+  "scripts": {
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit",
+    "shots": "node screenshots.mjs"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.10.0",
+    "elkjs": "^0.11.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.9.0"
+  }
+}
