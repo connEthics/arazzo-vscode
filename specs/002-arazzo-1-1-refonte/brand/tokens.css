@@ -211,9 +211,13 @@
   --ce-graph-handle-size: 8px;
   --ce-graph-focus-ring-width: 2px;
   --ce-graph-focus-ring-offset: 2px;
-  --ce-graph-dash-depends-on: 6 4;
-  --ce-graph-dash-retry: 2 3;
-  --ce-graph-dash-workflow-call: 8 3 2 3;
+  --ce-graph-dash-failure: 6 4;
+  --ce-graph-dash-end-failure: 6 4 1 4;
+  --ce-graph-dash-implicit-failure: 1 3;
+  --ce-graph-dash-retry: 2 3 6 3;
+  --ce-graph-dash-depends-on: 0.5 4.5;
+  --ce-graph-dash-transfer: 10 4;
+  --ce-graph-dash-workflow-call: none;
 
   /* ---------- Mouvement ---------- */
   --ce-duration-fast: 150ms;

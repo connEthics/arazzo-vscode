@@ -288,7 +288,11 @@ SPACE = {"0": 0, "px": 1, "0-5": 2, "1": 4, "1-5": 6, "2": 8, "2-5": 10, "3": 12
 RADIUS = {"none": 0, "xs": 2, "sm": 4, "md": 6, "lg": 8, "xl": 12, "2xl": 16, "3xl": 24, "full": 9999}
 GRAPH_DIM = {"node-width": 240, "node-min-height": 56, "node-radius": 8, "node-padding": 12, "edge-width": 1.5,
              "edge-width-selected": 2.5, "junction-size": 10, "handle-size": 8, "focus-ring-width": 2, "focus-ring-offset": 2}
-DASH = {"depends-on": "6 4", "retry": "2 3", "workflow-call": "8 3 2 3"}
+# Motifs de trait des arêtes (stroke-dasharray). Révisés au lot G1 (décision utilisateur du 16/11) :
+# chaque type a un motif distinct ; dependsOn passe en points ronds pour ne plus entrer en collision
+# avec l'échec (« 6 4 »). « none » = trait plein (l'appel de workflow est un double trait).
+DASH = {"failure": "6 4", "end-failure": "6 4 1 4", "implicit-failure": "1 3", "retry": "2 3 6 3",
+        "depends-on": "0.5 4.5", "transfer": "10 4", "workflow-call": "none"}
 DURATION = {"fast": 150, "normal": 200, "slow": 300}
 EASING = {"standard": [0.2, 0, 0, 1], "emphasized": [0.3, 0, 0, 1], "exit": [0.4, 0, 1, 1]}
 
@@ -416,7 +420,7 @@ tokens["typography"] = {
 tokens["space"] = {"$type": "dimension", **{k: {"$value": dim(v)} for k, v in SPACE.items()}}
 tokens["radius"] = {"$type": "dimension", **{k: {"$value": dim(v)} for k, v in RADIUS.items()}}
 tokens["graph"] = {"$type": "dimension", **{k: {"$value": dim(v)} for k, v in GRAPH_DIM.items()},
-                   "dash": {"$type": "strokeStyle", **{k: {"$value": {"dashArray": [dim(float(x)) for x in v.split()], "lineCap": "round"}} for k, v in DASH.items()}}}
+                   "dash": {"$type": "strokeStyle", **{k: {"$value": "solid" if v == "none" else {"dashArray": [dim(float(x)) for x in v.split()], "lineCap": "round"}} for k, v in DASH.items()}}}
 tokens["duration"] = {"$type": "duration", **{k: {"$value": {"value": v, "unit": "ms"}} for k, v in DURATION.items()}}
 tokens["easing"] = {"$type": "cubicBezier", **{k: {"$value": v} for k, v in EASING.items()}}
 

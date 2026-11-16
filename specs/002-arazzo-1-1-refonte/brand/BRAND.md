@@ -118,14 +118,28 @@ En résumé, il y a **quatre bleus** concurrents (`#2563eb` dans le CSS, `#155df
 | `workflow-call` | Étape `workflowId`, action vers un workflow (nœud et arête) | `#c026d3` / `#fdf4ff` / `#86198f` | `#e879f9` / `#2f1f4a` / `#f5d0fe` |
 | `success` | Arête `onSuccess`, critère satisfait | `#15803d` / `#f0fdf4` / `#166534` | `#4ade80` / `#123332` / `#bbf7d0` |
 | `failure` | Arête `onFailure`, critère en échec | `#dc2626` / `#fef2f2` / `#991b1b` | `#f87171` / `#331e2e` / `#fecaca` |
-| `retry` | Boucle retry `×N / Ns` (tirets `2 3`) | `#b45309` / `#fffbeb` / `#92400e` | `#fbbf24` / `#342d25` / `#fde68a` |
+| `retry` | Boucle retry `×N / Ns` (tiret-point `2 3 6 3`) | `#b45309` / `#fffbeb` / `#92400e` | `#fbbf24` / `#342d25` / `#fde68a` |
 | `end` | `type: end`, nœud terminal | `#334155` / `#f1f5f9` / `#1e293b` | `#cbd5e1` / `#1d263a` / `#e2e8f0` |
-| `depends-on` | Arête `dependsOn` (tirets `6 4`) et nœud de jonction | `#4f46e5` / `#eef2ff` / `#3730a3` | `#818cf8` / `#1c244a` / `#c7d2fe` |
+| `depends-on` | Arête `dependsOn` (points ronds `0.5 4.5`) et nœud de jonction | `#4f46e5` / `#eef2ff` / `#3730a3` | `#818cf8` / `#1c244a` / `#c7d2fe` |
 | `sequence` | Enchaînement implicite | `#64748b` / `#f8fafc` / `#475569` | `#94a3b8` / `#1d263a` / `#cbd5e1` |
 
-Le chrome du graphe dispose aussi de `--ce-graph-canvas`, `-grid`, `-node-bg`, `-node-border`, `-node-selected` et `-minimap-mask`, ainsi que de dimensions : `--ce-graph-node-width: 240px`, `-node-radius: 8px`, `-edge-width: 1.5px`, `-edge-width-selected: 2.5px`, `-junction-size`, `-handle-size`, `-focus-ring-width/offset` et `--ce-graph-dash-{depends-on,retry,workflow-call}`.
+Le chrome du graphe dispose aussi de `--ce-graph-canvas`, `-grid`, `-node-bg`, `-node-border`, `-node-selected` et `-minimap-mask`, ainsi que de dimensions : `--ce-graph-node-width: 240px`, `-node-radius: 8px`, `-edge-width: 1.5px`, `-edge-width-selected: 2.5px`, `-junction-size`, `-handle-size`, `-focus-ring-width/offset` et `--ce-graph-dash-{failure,end-failure,implicit-failure,retry,depends-on,transfer,workflow-call}`.
 
-> **La couleur ne porte jamais seule l'information** (WCAG 1.4.1). Chaque type a aussi une icône (send ↗, receive ↙, sous-workflow ⧉), un motif de trait (tirets pour `dependsOn`, pointillés pour retry) ou un libellé (`×3 / 2s`). C'est une contrainte pour D1/G1.
+> **La couleur ne porte jamais seule l'information** (WCAG 1.4.1). Chaque type a aussi une icône (send ↗, receive ↙, sous-workflow ⧉), un motif de trait (points ronds pour `dependsOn`, tirets pour l'échec, tiret-point pour retry) ou un libellé (`×3 / 2s`). C'est une contrainte pour D1/G1.
+
+**Motifs de trait — révision G1 (16/11/2026).** La version B1 donnait à `dependsOn` le motif `6 4`, déjà utilisé par les arêtes d'échec des maquettes D1 : les deux types étaient indiscernables sans la couleur. Décision utilisateur : un motif distinct par type d'arête. Les tokens `--ce-graph-dash-*` (et `graph.dash.*` de `tokens.json`, générés par `tools/gen_tokens.py`) deviennent :
+
+| Arête | Token | Motif (`stroke-dasharray`) |
+|---|---|---|
+| échec (`goto`) | `--ce-graph-dash-failure` | `6 4` |
+| fin en échec | `--ce-graph-dash-end-failure` | `6 4 1 4` (tiret-point) |
+| échec implicite (option) | `--ce-graph-dash-implicit-failure` | `1 3` |
+| retry | `--ce-graph-dash-retry` | `2 3 6 3` (était `2 3`) |
+| `dependsOn` | `--ce-graph-dash-depends-on` | `0.5 4.5`, extrémités rondes (était `6 4`) |
+| transfert (`goto workflowId`) | `--ce-graph-dash-transfer` | `10 4` |
+| appel de workflow | `--ce-graph-dash-workflow-call` | `none` : double trait (était `8 3 2 3`) |
+
+Les arêtes pleines (séquence 1,5 px neutre, succès 2 px vert, fin en succès 1,5 px vert) se distinguent par l'épaisseur, la couleur et le glyphe `✓` du libellé. Implémentation : `@connethics/arazzo-flow` (`--af-dash-*`).
 
 ### 2.3 Méthodes HTTP
 
