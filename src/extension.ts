@@ -1,11 +1,18 @@
 import * as vscode from 'vscode';
-import { isArazzoDocument, detectAndSelectWorkflow } from './arazzo-detection';
+import { detectAndSelectWorkflow } from './arazzo-detection';
 import { ParseCache, createDebouncedHandler } from './parse-cache';
 import { runValidation } from './validation/index';
 import { ArazzoPreviewPanel } from './panels/preview-panel';
 import { ArazzoFlowchartPanel } from './panels/flowchart-panel';
 import { YamlDocumentSymbolProvider } from './providers/symbol-provider';
 import { YamlCompletionItemProvider } from './providers/completion-provider';
+import {
+    ArazzoCodeActionProvider,
+    MIGRATE_COMMAND,
+    SELECT_SELF_COMMAND,
+    migrateActiveDocument,
+    selectSelfValue,
+} from './providers/code-action-provider';
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Arazzo VSCode extension is active');
@@ -45,7 +52,18 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     context.subscriptions.push(
-        vscode.languages.registerDocumentSymbolProvider({ language: 'yaml' }, new YamlDocumentSymbolProvider())
+        vscode.commands.registerCommand(MIGRATE_COMMAND, () => migrateActiveDocument(cache)),
+        vscode.commands.registerCommand(SELECT_SELF_COMMAND, (uri?: vscode.Uri) => selectSelfValue(cache, uri))
+    );
+
+    context.subscriptions.push(
+        vscode.languages.registerDocumentSymbolProvider({ language: 'yaml' }, new YamlDocumentSymbolProvider(cache))
+    );
+
+    context.subscriptions.push(
+        vscode.languages.registerCodeActionsProvider({ language: 'yaml' }, new ArazzoCodeActionProvider(cache), {
+            providedCodeActionKinds: ArazzoCodeActionProvider.providedCodeActionKinds,
+        })
     );
 
     const completionProvider = new YamlCompletionItemProvider();
@@ -70,7 +88,10 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(vscode.workspace.onDidOpenTextDocument(doc => runValidation(doc, diagnosticCollection, cache)));
     context.subscriptions.push(vscode.workspace.onDidChangeTextDocument(e => debouncedValidate(e.document)));
-    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => cache.delete(doc.uri.toString())));
+    context.subscriptions.push(vscode.workspace.onDidCloseTextDocument(doc => {
+        cache.delete(doc.uri.toString());
+        diagnosticCollection.delete(doc.uri);
+    }));
 
     context.subscriptions.push(vscode.window.onDidChangeTextEditorSelection(e => {
         if (e.textEditor.document.languageId === 'yaml') {

@@ -52,6 +52,11 @@
         "command": "arazzo-vscode.openFlowchart",
         "title": "Open Arazzo Flowchart",
         "icon": "$(graph)"
+      },
+      {
+        "command": "arazzo-vscode.migrateTo11",
+        "title": "Migrate to Arazzo 1.1.0",
+        "category": "Arazzo"
       }
     ],
     "menus": {
@@ -66,6 +71,12 @@
           "when": "resourceLangId == yaml",
           "group": "navigation"
         }
+      ],
+      "commandPalette": [
+        {
+          "command": "arazzo-vscode.migrateTo11",
+          "when": "editorLangId == yaml"
+        }
       ]
     }
   },
@@ -78,9 +89,11 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "vendor:check": "node ../arazzo-demo/scripts/sync-shared.mjs --check arazzo-core ."
   },
   "devDependencies": {
+    "@connethics/arazzo-core": "file:vendor/@connethics/arazzo-core",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/vscode": "^1.90.0",

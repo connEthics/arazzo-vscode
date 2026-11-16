@@ -1,40 +1,53 @@
 import * as vscode from 'vscode';
-import { parseDocument, isMap, isSeq, isScalar, Document } from 'yaml';
+import { isMap, isSeq, isScalar } from 'yaml';
+import {
+    KNOWN_ARAZZO_VERSIONS,
+    LATEST_ARAZZO_VERSION,
+    isArazzoDocument as coreIsArazzoDocument,
+    getArazzoVersion as coreGetArazzoVersion,
+    isKnownArazzoVersion as coreIsKnownArazzoVersion,
+    parseArazzo,
+} from '@connethics/arazzo-core';
 import type { ParseCache } from './parse-cache';
 
-const KNOWN_ARAZZO_VERSIONS = ['1.0.0', '1.0.1'];
+/** Versions published by the OAI (`1.0.0`, `1.0.1`, `1.1.0`), re-exported from arazzo-core. */
+export { KNOWN_ARAZZO_VERSIONS, LATEST_ARAZZO_VERSION };
 
 /**
- * Check if a YAML document root contains an `arazzo` key,
- * indicating it is an Arazzo specification file.
+ * Check if a document root contains an `arazzo` key, indicating it is an
+ * Arazzo specification file. Accepts either a `yaml` node (YAMLMap) or the
+ * plain JS value of the document.
  */
 export function isArazzoDocument(root: unknown): boolean {
-    if (!root || !isMap(root)) {
+    if (!root) {
         return false;
     }
-    return root.has('arazzo');
+    if (isMap(root)) {
+        return root.has('arazzo');
+    }
+    return coreIsArazzoDocument(root);
 }
 
 /**
- * Get the Arazzo version value from a document root.
+ * Get the Arazzo version value from a document root (`yaml` node or plain value).
  * Returns null if the document is not an Arazzo document.
  */
 export function getArazzoVersion(root: unknown): string | null {
-    if (!root || !isMap(root)) {
+    if (!root) {
         return null;
     }
-    const versionNode = root.get('arazzo', true);
-    if (versionNode && isScalar(versionNode)) {
-        return String(versionNode.value);
+    if (isMap(root)) {
+        const versionNode = root.get('arazzo', true);
+        return versionNode && isScalar(versionNode) && versionNode.value !== null ? String(versionNode.value) : null;
     }
-    return null;
+    return coreGetArazzoVersion(root);
 }
 
 /**
- * Check if the given version is a recognized Arazzo version.
+ * Check if the given version is a recognized Arazzo version (any `1.0.x` or `1.1.x`).
  */
 export function isKnownArazzoVersion(version: string): boolean {
-    return KNOWN_ARAZZO_VERSIONS.includes(version);
+    return coreIsKnownArazzoVersion(version);
 }
 
 /**
@@ -46,35 +59,29 @@ export function detectAndSelectWorkflow(
     cache?: ParseCache
 ): void {
     try {
-        const yamlDoc = cache ? cache.get(editor.document).parsed : parseDocument(editor.document.getText());
+        const contents = cache
+            ? cache.get(editor.document).parsed.contents
+            : parseArazzo(editor.document.getText()).yamlDoc.contents;
+        if (!contents || !isMap(contents) || !contents.has('arazzo')) {
+            return;
+        }
+
         const cursorLine = editor.selection.active.line;
-
-        if (!yamlDoc.contents || !isMap(yamlDoc.contents)) {
+        const workflows = contents.get('workflows', true);
+        if (!workflows || !isSeq(workflows)) {
             return;
         }
-
-        if (!isArazzoDocument(yamlDoc.contents)) {
-            return;
-        }
-
-        const workflows = yamlDoc.contents.get('workflows', true);
-        if (workflows && isSeq(workflows)) {
-            for (const item of workflows.items) {
-                if (isMap(item)) {
-                    const range = (item as any).range as number[] | undefined;
-                    if (range) {
-                        const startLine = editor.document.positionAt(range[0]).line;
-                        const endLine = editor.document.positionAt(range[2] || range[1]).line;
-
-                        if (cursorLine >= startLine && cursorLine <= endLine) {
-                            const workflowIdNode = item.get('workflowId', true);
-                            if (workflowIdNode && isScalar(workflowIdNode)) {
-                                const workflowId = String(workflowIdNode.value);
-                                updateSelection(editor.document.uri, workflowId);
-                                return;
-                            }
-                        }
-                    }
+        for (const item of workflows.items) {
+            if (!isMap(item) || !item.range) {
+                continue;
+            }
+            const startLine = editor.document.positionAt(item.range[0]).line;
+            const endLine = editor.document.positionAt(item.range[2] || item.range[1]).line;
+            if (cursorLine >= startLine && cursorLine <= endLine) {
+                const workflowIdNode = item.get('workflowId', true);
+                if (workflowIdNode && isScalar(workflowIdNode)) {
+                    updateSelection(editor.document.uri, String(workflowIdNode.value));
+                    return;
                 }
             }
         }
@@ -82,3 +89,4 @@ export function detectAndSelectWorkflow(
         console.error('Error detecting workflow', e);
     }
 }
+

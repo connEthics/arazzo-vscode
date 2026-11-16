@@ -1,23 +1,20 @@
 import * as vscode from 'vscode';
-import { parseDocument, isMap, isSeq, isPair, isScalar, Scalar } from 'yaml';
+import { isMap, isSeq, isPair, isScalar, Scalar } from 'yaml';
+import { ParseCache } from '../parse-cache';
 
 export class YamlDocumentSymbolProvider implements vscode.DocumentSymbolProvider {
+    constructor(private readonly cache: ParseCache) {}
+
     provideDocumentSymbols(document: vscode.TextDocument, _token: vscode.CancellationToken): vscode.DocumentSymbol[] {
-        const text = document.getText();
         try {
-            const yamlDoc = parseDocument(text);
-
-            if (yamlDoc.errors.length > 0) {
-                console.warn(`Arazzo VSCode: ${yamlDoc.errors.length} YAML Syntax Errors found.`);
-            }
-
+            // Reuse the parse shared with validation and completion (one parse per document version).
+            const yamlDoc = this.cache.get(document).parsed;
             if (!yamlDoc.contents) {
                 return [];
             }
-
             return this.parseNode(yamlDoc.contents, document);
         } catch (e) {
-            console.error('Arazzo VSCode: Error parsing YAML for symbols', e);
+            console.error('Arazzo VSCode: Error building YAML symbols', e);
             return [];
         }
     }
