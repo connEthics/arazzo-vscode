@@ -12,13 +12,13 @@ Règles communes à tous les lots :
 
 ---
 
-## Vague 0 — Recherche & cadrage
+## Vague 0 — Recherche & cadrage ✅ (16/11, `ffa174f`)
 
 ### R1 — Delta spec 1.0.1 → 1.1.0
-- [ ] Récupérer les JSON Schemas `1.0/schema/2025-10-15` et `1.1/schema/2026-04-15` et les stocker dans `research/schemas/`.
-- [ ] Produire le diff structuré des deux schémas.
-- [ ] Compléter avec le texte normatif de https://spec.openapis.org/arazzo/v1.1.0.html et l'historique Git `OAI/Arazzo-Specification`.
-- [ ] Préciser les points suivants :
+- [x] Récupérer les JSON Schemas `1.0/schema/2025-10-15` et `1.1/schema/2026-04-15` et les stocker dans `research/schemas/`.
+- [x] Produire le diff structuré des deux schémas.
+- [x] Compléter avec le texte normatif de https://spec.openapis.org/arazzo/v1.1.0.html et l'historique Git `OAI/Arazzo-Specification`.
+- [x] Préciser les points suivants :
   - les formes exactes de `dependsOn` (étape, workflow, inter-document) ;
   - l'exclusivité `operationId` / `operationPath` / `workflowId` / `channelPath` ;
   - les contraintes sur `action`, `correlationId` et `timeout` ;
@@ -26,71 +26,73 @@ Règles communes à tous les lots :
   - la résolution de `$self` ;
   - la sémantique truthy/falsy ;
   - les préfixes réservés.
-- [ ] Rédiger une table « règle → sévérité → code diagnostic → section spec », qui sert d'entrée à C1.
+- [x] Rédiger une table « règle → sévérité → code diagnostic → section spec », qui sert d'entrée à C1.
 - **Sortie** : `research/01-spec-delta-1.1.md`
 
 ### R2 — Pains & positionnement
-- [ ] Recenser les pains et leurs preuves, avec sources.
-- [ ] Formuler 3 messages clés en FR et en EN.
-- [ ] Identifier les personas visés : architecte API, QA/SDET, équipe plateforme IA, partenaire intégrateur.
+- [x] Recenser les pains et leurs preuves, avec sources.
+- [x] Formuler 3 messages clés en FR et en EN.
+- [x] Identifier les personas visés : architecte API, QA/SDET, équipe plateforme IA, partenaire intégrateur.
 - **Sortie** : `research/02-pains-positioning.md`
 
 ### R3 — Arazzo × MCP
-- [ ] Définir le mapping workflow → outil MCP :
+- [x] Définir le mapping workflow → outil MCP :
   - nom ;
   - description ;
   - `inputSchema` ;
   - sortie structurée ;
   - erreurs ;
   - auth.
-- [ ] Dresser l'état de l'écosystème : Bump.sh, arazzo-cli, Jentic, autres.
-- [ ] Faire un schéma d'architecture.
-- [ ] Analyser les risques et la gouvernance, en lien avec l'offre AI Governance ConnEthics.
-- [ ] Mentionner la roadmap OAI : MCP et A2A sont prévus comme types d'étape, mais ne font pas partie de la 1.1.
+- [x] Dresser l'état de l'écosystème : Bump.sh, arazzo-cli, Jentic, autres.
+- [x] Faire un schéma d'architecture.
+- [x] Analyser les risques et la gouvernance, en lien avec l'offre AI Governance ConnEthics.
+- [x] Mentionner la roadmap OAI : MCP et A2A sont prévus comme types d'étape, mais ne font pas partie de la 1.1.
 - **Sortie** : `research/03-mcp-arazzo.md`
 
 ### R4 — Runners E2E
-- [ ] Construire la matrice Respect / Specmatic / Jentic arazzo-runner / Speakeasy / arazzo-cli. Colonnes : 1.0, 1.1, AsyncAPI, CI, mocks, licence.
-- [ ] Documenter les commandes exactes, et les tester si le réseau le permet.
-- [ ] Recommander un runner par défaut pour les recettes de E1.
+- [x] Construire la matrice Respect / Specmatic / Jentic arazzo-runner / Speakeasy / arazzo-cli. Colonnes : 1.0, 1.1, AsyncAPI, CI, mocks, licence.
+- [x] Documenter les commandes exactes, et les tester si le réseau le permet.
+- [x] Recommander un runner par défaut pour les recettes de E1.
 - **Sortie** : `research/04-e2e-runners.md`
 
 ### R5 — Benchmark UI de graphe
-- [ ] Étudier n8n, Temporal UI, Step Functions Workflow Studio, Postman Flows, Jentic Arazzo Editor et LangGraph Studio.
-- [ ] Recenser les patterns utiles : nœuds-cartes, arêtes typées, groupes, couloirs, minimap, recherche, exports.
+- [x] Étudier n8n, Temporal UI, Step Functions Workflow Studio, Postman Flows, Jentic Arazzo Editor et LangGraph Studio.
+- [x] Recenser les patterns utiles : nœuds-cartes, arêtes typées, groupes, couloirs, minimap, recherche, exports.
 - **Sortie** : `research/05-graph-ui-benchmark.md`
 
 ### B1 — Marque
-- [ ] Auditer les 3 repos : noms, couleurs, logos, licences.
-- [ ] Créer `brand/tokens.json` et `brand/tokens.css`. Partir de la palette ConnEthics (bleu `#2563eb`, orange `#f97316`, slate) et ajouter des tokens sémantiques pour le graphe.
-- [ ] Faire des propositions sur le nom produit unifié, le lockup et l'icône d'extension (256 px, moins de 100 Ko).
-- [ ] **Faire valider par l'utilisateur** : nom, palette, licence de arazzo-demo.
+- [x] Auditer les 3 repos : noms, couleurs, logos, licences.
+- [x] Créer `brand/tokens.json` et `brand/tokens.css`. Partir de la palette ConnEthics (bleu `#2563eb`, orange `#f97316`, slate) et ajouter des tokens sémantiques pour le graphe.
+- [x] Faire des propositions sur le nom produit unifié, le lockup et l'icône d'extension (256 px, moins de 100 Ko).
+- [x] **Faire valider par l'utilisateur** : nom, palette, licence de arazzo-demo.
 
-## Vague 1 — Fondations
+## Vague 1 — Fondations ✅ (16/11 ; demo `29ee68a`, `a589190`)
+
+> Validations utilisateur encore attendues : décisions de `brand/BRAND.md` et de `design/UI-SPEC.md` §14.
 
 ### C1 — `@connethics/arazzo-core` (arazzo-demo/packages/arazzo-core)
-- [ ] Mettre en place un workspace npm à la racine de arazzo-demo (`packages/*`, `app`).
-- [ ] Écrire les types 1.1, en fusionnant et corrigeant `types/arazzo.ts`, aujourd'hui dupliqué dans demo et vscode.
-- [ ] Faire le parse YAML et produire une table de correspondance chemin JSON → position.
-- [ ] Valider contre le JSON Schema officiel avec ajv 2020-12, en choisissant le schéma selon la valeur de `arazzo`.
-- [ ] Implémenter les règles sémantiques de la table R1, sans aucun diagnostic en double.
-- [ ] Écrire `workflowToGraph` (nœuds, arêtes et groupes typés) et `graphToMermaid`.
-- [ ] Écrire les tests Vitest : un test par règle, plus le corpus E1 et les fixtures vscode.
-- [ ] Créer le script `scripts/sync-shared.mjs`, qui copie `dist/` vers `vendor/` des consommateurs et écrit un hash.
+- [x] Mettre en place un workspace npm à la racine de arazzo-demo (`packages/*`, `app`).
+- [x] Écrire les types 1.1, en fusionnant et corrigeant `types/arazzo.ts`, aujourd'hui dupliqué dans demo et vscode.
+- [x] Faire le parse YAML et produire une table de correspondance chemin JSON → position.
+- [x] Valider contre le JSON Schema officiel avec ajv 2020-12, en choisissant le schéma selon la valeur de `arazzo`.
+- [x] Implémenter les règles sémantiques de la table R1, sans aucun diagnostic en double.
+- [x] Écrire `workflowToGraph` (nœuds, arêtes et groupes typés) et `graphToMermaid`.
+- [x] Écrire les tests Vitest : un test par règle, plus le corpus E1 et les fixtures vscode.
+- [x] Créer le script `scripts/sync-shared.mjs`, qui copie `dist/` vers `vendor/` des consommateurs et écrit un hash.
 
 ### D1 — Design du graphe
-- [ ] Réaliser des maquettes HTML (React Flow) en light, dark et HC, sur order-to-cash et pet-adoption.
-- [ ] Rédiger la spec UI : nœuds, arêtes, groupes, couloirs, interactions, exports, accessibilité clavier.
-- [ ] **Faire valider par l'utilisateur.**
+- [x] Réaliser des maquettes HTML (React Flow) en light, dark et HC, sur order-to-cash et pet-adoption.
+- [x] Rédiger la spec UI : nœuds, arêtes, groupes, couloirs, interactions, exports, accessibilité clavier.
+- [x] **Faire valider par l'utilisateur.**
 
 ### E1 — Exemples 1.1 (arazzo-demo/app/public/workflows/)
-- [ ] `mcp-travel-booking.arazzo.yaml`, avec `mcp-tools.json`.
-- [ ] `mcp-support-refund.arazzo.yaml` : hybride HTTP + AsyncAPI `send`.
-- [ ] `e2e-order-to-cash.arazzo.yaml` : `receive`, `correlationId`, `timeout`, `dependsOn`, Selector.
-- [ ] `e2e-session-renewal.arazzo.yaml` : 401 → retry via workflow `renewSession`, `querystring`.
-- [ ] `e2e-onboarding-entreprise-fr.arazzo.yaml` : INPI/SIRENE en stub.
-- [ ] Fournir pour chaque exemple des sources stub (OpenAPI 3.1 / AsyncAPI 3.0) et un README : scénario, mock, exécution, recette GitHub Actions.
-- [ ] Migrer `pet-adoption` et `ecommerce-onboarding` en 1.1.
+- [x] `mcp-travel-booking.arazzo.yaml`, avec `mcp-tools.json`.
+- [x] `mcp-support-refund.arazzo.yaml` : hybride HTTP + AsyncAPI `send`.
+- [x] `e2e-order-to-cash.arazzo.yaml` : `receive`, `correlationId`, `timeout`, `dependsOn`, Selector.
+- [x] `e2e-session-renewal.arazzo.yaml` : 401 → retry via workflow `renewSession`, `querystring`.
+- [x] `e2e-onboarding-entreprise-fr.arazzo.yaml` : INPI/SIRENE en stub.
+- [x] Fournir pour chaque exemple des sources stub (OpenAPI 3.1 / AsyncAPI 3.0) et un README : scénario, mock, exécution, recette GitHub Actions.
+- [x] Migrer `pet-adoption` et `ecommerce-onboarding` en 1.1.
 
 ## Vague 2 — Produits
 
