@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { diagnosticRange } from '@connethics/arazzo-core';
-import type { Diagnostic as CoreDiagnostic, ParseError, Severity } from '@connethics/arazzo-core';
+import { diagnosticRange } from '../arazzo-core';
+import type { Diagnostic as CoreDiagnostic, ParseError, Severity } from '../arazzo-core';
 import { ParseCache, ParseCacheEntry, getCoreDiagnostics } from '../parse-cache';
 import { specLinkForRule } from './spec-links';
 

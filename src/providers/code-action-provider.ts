@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { isMap, isPair, isScalar } from 'yaml';
 import type { Pair, YAMLMap } from 'yaml';
-import { LATEST_ARAZZO_VERSION, locate } from '@connethics/arazzo-core';
-import type { Diagnostic as CoreDiagnostic, JsonPath } from '@connethics/arazzo-core';
+import { LATEST_ARAZZO_VERSION, locate } from '../arazzo-core';
+import type { Diagnostic as CoreDiagnostic, JsonPath } from '../arazzo-core';
 import { ParseCache, ParseCacheEntry, getCoreDiagnostics } from '../parse-cache';
 import { DIAGNOSTIC_SOURCE, coreDiagnosticRange, diagnosticCode } from '../validation/index';
 

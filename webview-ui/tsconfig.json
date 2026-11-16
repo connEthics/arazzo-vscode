@@ -17,7 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@connethics/arazzo-core": ["../vendor/@connethics/arazzo-core/dist/index.d.ts"]
     }
   },
   "include": ["src"]

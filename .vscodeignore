@@ -16,6 +16,12 @@ vsc-extension-quickstart.md
 context/**
 .vscode-test.mjs
 
+# Vendored @connethics/arazzo-core: bundled into dist/extension.js by webpack,
+# so only its license notice ships (MIT + Apache-2.0 notice for the OAI schemas).
+vendor/**
+!vendor/@connethics/arazzo-core/LICENSE
+scripts/**
+
 # Webview UI exclusions (include only the production build)
 webview-ui/**
 !webview-ui/build/**
@@ -25,6 +31,7 @@ webview-ui/**
 .planning/**
 .specify/**
 .automaker/**
+specs/**
 CLAUDE.md
 SUPPORT.md
 CONTRIBUTING.md

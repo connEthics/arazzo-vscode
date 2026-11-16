@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { isMap, isSeq } from 'yaml';
 import type { YAMLMap, YAMLSeq } from 'yaml';
-import { DEFAULT_EXPRESSION_VERSIONS, LATEST_ARAZZO_VERSION } from '@connethics/arazzo-core';
-import type { ArazzoDocument, Step, Workflow } from '@connethics/arazzo-core';
+import { DEFAULT_EXPRESSION_VERSIONS, LATEST_ARAZZO_VERSION } from '../arazzo-core';
+import type { ArazzoDocument, Step, Workflow } from '../arazzo-core';
 import { ParseCache, ParseCacheEntry } from '../parse-cache';
 
 export type ArazzoContext =
@@ -431,7 +431,7 @@ export class YamlCompletionItemProvider implements vscode.CompletionItemProvider
             }
         }
 
-        if (!NON_EXPRESSION_KEYS.has(key) || partial.includes('$')) {
+        if (key !== 'reference' && (!NON_EXPRESSION_KEYS.has(key) || partial.includes('$'))) {
             items.push(...this.getExpressionCompletions(partial, position, scope));
         }
         return items;

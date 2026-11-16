@@ -10,6 +10,8 @@
 out
 dist
 node_modules
+# Vendored shared package: its prebuilt dist/ is part of the copy (checked by npm run vendor:check)
+!vendor/@connethics/arazzo-core/dist/
 .vscode-test/
 *.vsix
 

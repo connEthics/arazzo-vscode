@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { waitFor } from './helpers';
+import { waitFor, codeOf, errorsOf, describe, settledDiagnostics } from './helpers';
 
 suite('Arazzo Extension Test Suite', () => {
 	vscode.window.showInformationMessage('Start all tests.');
@@ -27,12 +27,8 @@ workflows:
 			language: 'yaml'
 		});
 
-		await waitFor(() => {
-			const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-			return diagnostics.length === 0;
-		});
-
-		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+		const diagnostics = await settledDiagnostics(doc.uri);
+		assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
 		assert.strictEqual(diagnostics.length, 0, `Expected 0 diagnostics, got ${diagnostics.length}: ${JSON.stringify(diagnostics.map(d => d.message))}`);
 	});
 
@@ -76,11 +72,11 @@ arazzo: 1.0.1
 
 		await waitFor(() => {
 			const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-			return diagnostics.some(d => d.code === 'arazzo-version');
+			return diagnostics.some(d => codeOf(d) === 'arazzo-version');
 		});
 
 		const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-		const versionWarning = diagnostics.find(d => d.code === 'arazzo-version');
+		const versionWarning = diagnostics.find(d => codeOf(d) === 'arazzo-version');
 		assert.ok(versionWarning, 'Version warning diagnostic not found');
 		assert.strictEqual(versionWarning.severity, vscode.DiagnosticSeverity.Warning);
 		assert.ok(versionWarning.message.includes('2.0.0'), 'Warning should mention the version');

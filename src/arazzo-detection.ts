@@ -7,7 +7,7 @@ import {
     getArazzoVersion as coreGetArazzoVersion,
     isKnownArazzoVersion as coreIsKnownArazzoVersion,
     parseArazzo,
-} from '@connethics/arazzo-core';
+} from './arazzo-core';
 import type { ParseCache } from './parse-cache';
 
 /** Versions published by the OAI (`1.0.0`, `1.0.1`, `1.1.0`), re-exported from arazzo-core. */

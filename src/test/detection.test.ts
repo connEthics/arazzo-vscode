@@ -1,7 +1,14 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { parseDocument, isMap } from 'yaml';
-import { isArazzoDocument, getArazzoVersion, isKnownArazzoVersion, detectAndSelectWorkflow } from '../arazzo-detection';
+import {
+	isArazzoDocument,
+	getArazzoVersion,
+	isKnownArazzoVersion,
+	detectAndSelectWorkflow,
+	KNOWN_ARAZZO_VERSIONS,
+	LATEST_ARAZZO_VERSION,
+} from '../arazzo-detection';
 
 suite('Arazzo Detection', () => {
 	test('isArazzoDocument returns true for Arazzo file', () => {
@@ -37,14 +44,28 @@ suite('Arazzo Detection', () => {
 		assert.strictEqual(getArazzoVersion(doc.contents), null);
 	});
 
-	test('isKnownArazzoVersion returns true for 1.0.0 and 1.0.1', () => {
+	test('isKnownArazzoVersion returns true for 1.0.0, 1.0.1 and 1.1.0', () => {
 		assert.strictEqual(isKnownArazzoVersion('1.0.0'), true);
 		assert.strictEqual(isKnownArazzoVersion('1.0.1'), true);
+		assert.strictEqual(isKnownArazzoVersion('1.1.0'), true);
 	});
 
 	test('isKnownArazzoVersion returns false for unknown versions', () => {
 		assert.strictEqual(isKnownArazzoVersion('2.0.0'), false);
+		assert.strictEqual(isKnownArazzoVersion('1.2.0'), false);
 		assert.strictEqual(isKnownArazzoVersion('0.1.0'), false);
+	});
+
+	test('KNOWN_ARAZZO_VERSIONS lists 1.1.0, the latest version', () => {
+		assert.deepStrictEqual([...KNOWN_ARAZZO_VERSIONS], ['1.0.0', '1.0.1', '1.1.0']);
+		assert.strictEqual(LATEST_ARAZZO_VERSION, '1.1.0');
+	});
+
+	test('getArazzoVersion reads 1.1.0 from a yaml node and from a plain value', () => {
+		const doc = parseDocument('arazzo: 1.1.0\n$self: https://example.com/a.arazzo.yaml\n');
+		assert.strictEqual(getArazzoVersion(doc.contents), '1.1.0');
+		assert.strictEqual(getArazzoVersion(doc.toJS()), '1.1.0');
+		assert.strictEqual(isArazzoDocument(doc.toJS()), true);
 	});
 
 	test('detectAndSelectWorkflow selects workflow at cursor', async () => {

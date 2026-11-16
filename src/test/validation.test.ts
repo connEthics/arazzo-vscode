@@ -1,7 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { waitFor } from './helpers';
+import { waitFor, codeOf, withCode, errorsOf, describe, settledDiagnostics } from './helpers';
 
 suite('Validation Rules', () => {
 
@@ -23,17 +23,13 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive').length, 0);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-operation-required').length, 0);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-ref-dependsOn').length, 0);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-source-type').length, 0);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-duplicate-stepId').length, 0);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive').length, 0);
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-missing').length, 0);
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-workflow-depends-on-resolved').length, 0);
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-source-type-enum').length, 0);
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-step-id-unique').length, 0);
     });
 
     test('Mutual exclusivity: step with operationId and operationPath should produce error', async () => {
@@ -42,11 +38,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-mutual-exclusive');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-step-target-exclusive');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const mutualExcl = diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive');
+        const mutualExcl = diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive');
         assert.ok(mutualExcl.length > 0, 'Should find mutual-exclusive error');
         assert.strictEqual(mutualExcl[0].severity, vscode.DiagnosticSeverity.Error);
     });
@@ -70,11 +66,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-operation-required');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-step-target-missing');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const opRequired = diagnostics.filter(d => d.code === 'arazzo-operation-required');
+        const opRequired = diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-missing');
         assert.ok(opRequired.length > 0, 'Should find operation-required error');
     });
 
@@ -84,11 +80,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-ref-dependsOn');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-workflow-depends-on-resolved');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const refErrors = diagnostics.filter(d => d.code === 'arazzo-ref-dependsOn');
+        const refErrors = diagnostics.filter(d => codeOf(d) === 'arazzo-workflow-depends-on-resolved');
         assert.ok(refErrors.length > 0, 'Should find dependsOn reference error');
         assert.ok(refErrors[0].message.includes('nonExistent'), 'Message should mention the missing workflow');
     });
@@ -99,11 +95,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-source-type');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-source-type-enum');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const sourceTypeErrors = diagnostics.filter(d => d.code === 'arazzo-source-type');
+        const sourceTypeErrors = diagnostics.filter(d => codeOf(d) === 'arazzo-source-type-enum');
         assert.ok(sourceTypeErrors.length > 0, 'Should find source-type error');
     });
 
@@ -113,11 +109,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-duplicate-stepId');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-step-id-unique');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const dupErrors = diagnostics.filter(d => d.code === 'arazzo-duplicate-stepId');
+        const dupErrors = diagnostics.filter(d => codeOf(d) === 'arazzo-step-id-unique');
         assert.ok(dupErrors.length > 0, 'Should find duplicate stepId error');
         assert.ok(dupErrors[0].message.includes('duplicateStep'), 'Message should mention the duplicate stepId');
     });
@@ -140,13 +136,9 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-source-type').length, 0);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-source-type-enum').length, 0);
     });
 
     test('Valid source type arazzo should not produce error', async () => {
@@ -167,13 +159,9 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-source-type').length, 0);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-source-type-enum').length, 0);
     });
 
     test('Step with only operationPath should not produce mutual-exclusive error', async () => {
@@ -194,14 +182,10 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive').length, 0);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-operation-required').length, 0);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive').length, 0);
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-missing').length, 0);
     });
 
     test('Valid dependsOn with existing workflow should not produce error', async () => {
@@ -228,13 +212,9 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        assert.strictEqual(diagnostics.filter(d => d.code === 'arazzo-ref-dependsOn').length, 0);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+        assert.strictEqual(diagnostics.filter(d => codeOf(d) === 'arazzo-workflow-depends-on-resolved').length, 0);
     });
 
     // =========================================================================
@@ -720,11 +700,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-version');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-version');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const versionWarning = diagnostics.find(d => d.code === 'arazzo-version');
+        const versionWarning = diagnostics.find(d => codeOf(d) === 'arazzo-version');
         assert.ok(versionWarning, 'Should find arazzo-version warning');
         assert.strictEqual(versionWarning.severity, vscode.DiagnosticSeverity.Warning);
         assert.ok(versionWarning.message.includes('2.0.0'), 'Warning should mention the version');
@@ -748,17 +728,76 @@ workflows:
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
         assert.strictEqual(
-            diagnostics.filter(d => d.code === 'arazzo-version').length,
+            diagnostics.filter(d => codeOf(d) === 'arazzo-version').length,
             0,
             'Should not find any arazzo-version warning for known version 1.0.0'
         );
+    });
+
+    const versionDoc = (version: string) => `
+arazzo: ${version}
+info:
+  title: Test
+  version: 1.0.0
+sourceDescriptions:
+  - name: test
+    url: http://example.com
+    type: openapi
+workflows:
+  - workflowId: testWorkflow
+    steps:
+      - stepId: step1
+        operationId: testOp
+`;
+
+    for (const version of ['1.0.1', '1.1.0']) {
+        test(`Known arazzo version ${version} should not produce version warning`, async () => {
+            const doc = await vscode.workspace.openTextDocument({ content: versionDoc(version), language: 'yaml' });
+            const diagnostics = await settledDiagnostics(doc.uri);
+            assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
+            assert.strictEqual(withCode(diagnostics, 'arazzo-version').length, 0);
+        });
+    }
+
+    test('Unknown arazzo version 1.2.0 should produce arazzo-version warning listing 1.1.x', async () => {
+        const doc = await vscode.workspace.openTextDocument({ content: versionDoc('1.2.0'), language: 'yaml' });
+        const diagnostics = await settledDiagnostics(doc.uri, ds => withCode(ds, 'arazzo-version').length > 0);
+        const [warning] = withCode(diagnostics, 'arazzo-version');
+        assert.strictEqual(warning.severity, vscode.DiagnosticSeverity.Warning);
+        assert.ok(warning.message.includes('1.2.0'), warning.message);
+        assert.ok(warning.message.includes('1.1.x'), 'Known versions should include 1.1.x');
+        assert.strictEqual(warning.range.start.line, 1, 'Warning should be on the arazzo value');
+    });
+
+    test('Malformed arazzo version "1.1" should produce arazzo-version-format error', async () => {
+        const doc = await vscode.workspace.openTextDocument({ content: versionDoc('"1.1"'), language: 'yaml' });
+        const diagnostics = await settledDiagnostics(doc.uri, ds => withCode(ds, 'arazzo-version-format').length > 0);
+        assert.strictEqual(withCode(diagnostics, 'arazzo-version-format')[0].severity, vscode.DiagnosticSeverity.Error);
+    });
+
+    test('Diagnostics carry the rule id, the arazzo source and a link to the 1.1.0 specification', async () => {
+        const fixturePath = path.resolve(__dirname, '../../src/test/fixtures/duplicate-stepid.arazzo.yaml');
+        const doc = await vscode.workspace.openTextDocument(fixturePath);
+        const diagnostics = await settledDiagnostics(doc.uri, ds => withCode(ds, 'arazzo-step-id-unique').length > 0);
+        const [dup] = withCode(diagnostics, 'arazzo-step-id-unique');
+        assert.strictEqual(dup.source, 'arazzo');
+        assert.ok(typeof dup.code === 'object', 'code should be { value, target }');
+        const target = (dup.code as { target: vscode.Uri }).target.toString();
+        assert.ok(target.startsWith('https://spec.openapis.org/arazzo/v1.1.0.html#step-object'), target);
+        // The range covers the duplicated stepId value only.
+        assert.strictEqual(doc.getText(dup.range), 'duplicateStep');
+    });
+
+    test('No duplicate diagnostics (same rule, same range)', async () => {
+        const fixturePath = path.resolve(__dirname, '../../src/test/fixtures/invalid-mutual-exclusivity.arazzo.yaml');
+        const doc = await vscode.workspace.openTextDocument(fixturePath);
+        const diagnostics = await settledDiagnostics(doc.uri, ds => withCode(ds, 'arazzo-step-target-exclusive').length > 0);
+        const keys = diagnostics.map(d => `${codeOf(d)}|${d.range.start.line}:${d.range.start.character}`);
+        assert.strictEqual(new Set(keys).size, keys.length, keys.join('\n'));
+        assert.strictEqual(withCode(diagnostics, 'arazzo-step-target-exclusive').length, 1);
     });
 
     // =========================================================================
@@ -780,22 +819,22 @@ workflows:
     steps:
       - stepId: step1
         workflowId: anotherWorkflow
+  - workflowId: anotherWorkflow
+    steps:
+      - stepId: step1
+        operationId: testOp
 `;
         const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
 
-        await waitFor(() => {
-            const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.length === 0;
-        });
-
-        const diagnostics = vscode.languages.getDiagnostics(doc.uri);
+        const diagnostics = await settledDiagnostics(doc.uri);
+        assert.strictEqual(errorsOf(diagnostics).length, 0, describe(errorsOf(diagnostics)));
         assert.strictEqual(
-            diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive').length,
+            diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive').length,
             0,
             'Step with only workflowId should not have mutual-exclusive error'
         );
         assert.strictEqual(
-            diagnostics.filter(d => d.code === 'arazzo-operation-required').length,
+            diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-missing').length,
             0,
             'Step with workflowId should not have operation-required error'
         );
@@ -822,11 +861,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-mutual-exclusive');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-step-target-exclusive');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const mutualExcl = diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive');
+        const mutualExcl = diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive');
         assert.ok(mutualExcl.length > 0, 'Should find mutual-exclusive error for operationId + workflowId');
         assert.strictEqual(mutualExcl[0].severity, vscode.DiagnosticSeverity.Error);
     });
@@ -852,11 +891,11 @@ workflows:
 
         await waitFor(() => {
             const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-            return diagnostics.some(d => d.code === 'arazzo-mutual-exclusive');
+            return diagnostics.some(d => codeOf(d) === 'arazzo-step-target-exclusive');
         });
 
         const diagnostics = vscode.languages.getDiagnostics(doc.uri);
-        const mutualExcl = diagnostics.filter(d => d.code === 'arazzo-mutual-exclusive');
+        const mutualExcl = diagnostics.filter(d => codeOf(d) === 'arazzo-step-target-exclusive');
         assert.ok(mutualExcl.length > 0, 'Should find mutual-exclusive error for operationPath + workflowId');
         assert.strictEqual(mutualExcl[0].severity, vscode.DiagnosticSeverity.Error);
     });

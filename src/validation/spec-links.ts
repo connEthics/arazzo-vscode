@@ -1,4 +1,4 @@
-import { RULES } from '@connethics/arazzo-core';
+import { RULES } from '../arazzo-core';
 
 /** Arazzo 1.1.0 specification (rule sections of arazzo-core use its numbering). */
 export const SPEC_URL = 'https://spec.openapis.org/arazzo/v1.1.0.html';

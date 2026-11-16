@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import type { Document } from 'yaml';
-import { parseArazzo, validate } from '@connethics/arazzo-core';
-import type { ArazzoDocument, Diagnostic as CoreDiagnostic, ParseError } from '@connethics/arazzo-core';
+import { parseArazzo, validate } from './arazzo-core';
+import type { ArazzoDocument, Diagnostic as CoreDiagnostic, ParseError } from './arazzo-core';
 
 export interface ParseCacheEntry {
     /** `TextDocument.version` the entry was computed for. */

@@ -1,4 +1,5 @@
 import type { Workflow } from '../../types/arazzo';
+import { outputsAsText } from '../../types/arazzo';
 import { SectionHeader, Badge } from '@/components/primitives';
 import { InputContent, OutputContent } from '../DetailViews';
 
@@ -49,8 +50,8 @@ export default function WorkflowBody({
                     isDark={isDark}
                 />
                 <OutputContent
-                    output={{ name: 'Workflow Outputs', value: '', allOutputs: workflow.outputs }}
-                    workflowOutputs={workflow.outputs}
+                    output={{ name: 'Workflow Outputs', value: '', allOutputs: outputsAsText(workflow.outputs) }}
+                    workflowOutputs={outputsAsText(workflow.outputs)}
                     isDark={isDark}
                     textClass={textClass}
                     mutedClass={mutedClass}
