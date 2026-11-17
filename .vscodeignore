@@ -26,7 +26,9 @@ vendor/**
 !vendor/@connethics/arazzo-flow/dist/elk-worker.LICENSE.md
 scripts/**
 
-# Screenshots for the README / site (linked from GitHub, not needed in the VSIX)
+# Screenshots for the README / site, not needed in the VSIX: vsce rewrites the README's
+# relative image links to https://github.com/connEthics/arazzo-vscode/raw/HEAD/images/v2/…
+# (they must be on the default branch when publishing, or use --githubBranch).
 images/v2/**
 
 # Webview UI exclusions (include only the production build)

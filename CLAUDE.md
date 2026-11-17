@@ -4,87 +4,167 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-VS Code extension for visualizing and editing Arazzo YAML workflow specifications (OpenAPI's format for multi-step API workflows). Provides live preview, flowchart diagrams, validation, and outline navigation. Published on the VS Code Marketplace.
+**Arazzo for VS Code — by ConnEthics** (`connethics.arazzo-vscode`, published on the VS Code Marketplace) is a VS Code extension for authoring, validating and visualizing [Arazzo](https://spec.openapis.org/arazzo/v1.1.0.html) workflow documents, versions 1.0.x and **1.1.0**, against OpenAPI and AsyncAPI sources. It provides:
+
+- two-layer validation (official JSON Schema + semantic rules);
+- completion, quick fixes (including "Migrate to Arazzo 1.1.0") and snippets;
+- outline symbols;
+- an interactive workflow graph and a live documentation view, both in webviews.
+
+Validation and the graph come from two ConnEthics packages that are vendored in `vendor/` (see below).
 
 ## Build & Development Commands
 
 ```bash
-# Extension
-npm run compile          # webpack dev build
-npm run watch            # webpack watch mode (use during development)
-npm run package          # production build (hidden source maps)
-npm run lint             # eslint on src/
-npm test                 # run VS Code integration tests
-npm run compile-tests    # compile test files to out/
+# Extension (repo root)
+npm run compile          # webpack dev build → dist/extension.js
+npm run watch            # webpack watch mode
+npm run package          # production build (hidden source maps), used by vscode:prepublish
+npm run lint             # eslint src/
+npm run compile-tests    # tsc → out/ (mocha tests)
+npm test                 # pretest (compile-tests + compile + lint), then vscode-test
+xvfb-run -a npm test     # same on a headless Linux machine (VS Code needs a display)
 
-# Webview UI (must run from webview-ui/)
-cd webview-ui && npm run build   # production build (outputs to webview-ui/build/)
-cd webview-ui && npm run dev     # Vite dev server
+# Vendored ConnEthics packages
+npm run vendor:check     # verify vendor/@connethics/* against VENDOR.json (SHA-256)
+npm run vendor:sync      # re-copy from ../arazzo-demo (needs that checkout and its built packages/)
 
-# Packaging for marketplace
-cd webview-ui && npm install && npm run build
-npx @vscode/vsce package
+# Webview UI (run from webview-ui/)
+npm run build            # tsc + vite build → webview-ui/build/
+npm run dev              # Vite dev server
+npm test                 # vitest (jsdom, mocked ELK)
+node scripts/capture.mjs # README screenshots → ../images/v2/*.png (Playwright, preinstalled Chromium; never run `playwright install`)
+
+# Marketplace package (never `vsce publish` without an explicit request)
+npx @vscode/vsce package # runs vscode:prepublish: webview npm install + build, then npm run package
+npx @vscode/vsce ls      # list the files that go into the VSIX
 ```
 
-**Important**: The webview must be built (`webview-ui/build/`) before the extension can render preview/flowchart panels. Always rebuild the webview after UI changes.
+**Important**: the extension renders its panels from `webview-ui/build/`. Rebuild the webview after any UI change, and after `vendor:sync` of arazzo-flow or arazzo-core.
 
 ## Architecture
 
-### Two-Process Model
+### Extension host (`src/`)
 
-The extension runs in two contexts that communicate via `postMessage`:
+- `extension.ts`: `activate()` only, about 110 lines. It registers commands, providers, the diagnostic collection `arazzo-yaml`, the debounced change handler (250 ms) and the cursor → graph sync.
+- `arazzo-core.ts`: **the only import point** of `@connethics/arazzo-core`. It does `export * from '../vendor/@connethics/arazzo-core/dist/index.cjs'`. The relative path works both for webpack and for the tsc-compiled tests in `out/`. Always import core through this module.
+- `parse-cache.ts`: `ParseCache` holds one `parseArazzo()` per document version and is shared by validation, completion, symbols, code actions and panels. `getCoreDiagnostics(entry)` memoizes `validate()`. `createDebouncedHandler()` is also defined here.
+- `arazzo-detection.ts`: Arazzo document and version detection (`KNOWN_ARAZZO_VERSIONS` and `LATEST_ARAZZO_VERSION`, re-exported from core). `detectAndSelectWorkflow()` maps the cursor to a workflow and step and pushes the result to the graph.
+- `validation/index.ts`: maps core diagnostics to `vscode.Diagnostic`. It handles the range (from the YAML node or the JSON path), the severity, `code: { value, target }` with the spec link, `source: 'arazzo'` and the `Unnecessary` tag for unused sources and components. YAML syntax errors are added as well. `validation/spec-links.ts` maps a rule's `§section` to an anchor of the 1.1.0 spec.
+- `providers/completion-provider.ts`: context-aware keys and enumerations, runtime expressions (`$message.*`, `$self`…), and `dependsOn` / `goto` targets.
+- `providers/code-action-provider.ts`: quick fixes:
+  - migrate to 1.1.0 (`arazzo-vscode.migrateTo11`);
+  - add `$self` (followed by the internal command `arazzo-vscode.selectSelfValue`);
+  - "did you mean" for unresolved step and workflow IDs;
+  - dotted expression → JSON Pointer.
+- `providers/symbol-provider.ts`: outline built from the cached parse.
+- `panels/preview-panel.ts`: `ArazzoPreviewPanel`, the documentation view, one panel per document URI.
+- `panels/flowchart-panel.ts`: `ArazzoFlowchartPanel`, the graph. It also contains:
+  - `findStepRange()`, which maps a step to editor offsets;
+  - `loadLocalSources()`, which reads local OpenAPI sources (relative or `file:` URLs, ≤ 5 MB, never remote) to show HTTP method badges;
+  - the export save dialog.
+- `panels/webview-html.ts`: `getHtmlForWebview()` (shared by both panels) and `buildCsp()`.
 
-1. **Extension Host** (`src/extension.ts`) — All extension logic lives in this single file (~750 lines). Contains:
-   - `ArazzoPreviewPanel` / `ArazzoFlowchartPanel` — Webview panel managers
-   - `YamlDocumentSymbolProvider` — Outline/symbol navigation for YAML
-   - `YamlCompletionItemProvider` — Basic YAML completion
-   - `validateArazzo()` / `validateStep()` — Real-time spec validation producing VS Code diagnostics
-   - `detectAndSelectWorkflow()` — Cursor position → active workflow auto-sync
+Validation rules live in arazzo-core, not here. To change a rule, change `arazzo-demo/packages/arazzo-core`, then run `vendor:sync`.
 
-2. **Webview UI** (`webview-ui/`) — React + Vite + Tailwind app loaded inside VS Code panels:
-   - `App.tsx` — Message bridge between VS Code API and React components
-   - `UnifiedDocumentationView` — Full spec documentation renderer
-   - `FlowchartView` — Mermaid.js-based workflow visualization
-   - `types/arazzo.ts` — Complete Arazzo spec TypeScript types
-   - `lib/mermaid-converter.ts` — Workflow → Mermaid DSL conversion
+### Vendored packages (`vendor/@connethics/`)
 
-### Message Protocol (Extension ↔ Webview)
+The source of truth is **arazzo-demo** (`packages/arazzo-core`, `packages/arazzo-flow`, MIT). `scripts/sync-shared.mjs` (in arazzo-demo) copies their built `dist/` here, with a SHA-256 manifest in `VENDOR.json`. `scripts/vendor-check.mjs` verifies the copy: it delegates to arazzo-demo when `../arazzo-demo` exists (or `ARAZZO_DEMO`), and runs a standalone check otherwise. **Never edit vendored files by hand.**
 
-- `{ type: 'ready' }` — Webview signals ready to receive data
-- `{ type: 'update', spec }` — Push parsed spec to documentation view
-- `{ type: 'update-flowchart', spec, workflowId }` — Push spec to flowchart view
-- `{ type: 'select-workflow', workflowId }` — Auto-select workflow from cursor
-- `{ type: 'scroll-to-step', stepId, workflowId }` — Navigate to step in preview
-- `{ type: 'step-selected', stepId, workflowId }` — Step clicked in flowchart → navigate editor
+- `arazzo-core`:
+  - TypeScript types for Arazzo 1.0/1.1;
+  - `parseArazzo` (`yaml` v2, with source ranges);
+  - `validate`: ajv standalone validators for the official 1.0 and 1.1 schemas, plus 100+ semantic rules (`RULES`);
+  - `workflowToGraph` / `graphToMermaid`.
+  - Only runtime dependency: `yaml`, resolved from this repo's `node_modules`.
+- `arazzo-flow`:
+  - the read-only React graph (`ArazzoGraph`, `ArazzoGraphFromDocument`), built on `@xyflow/react` 12 and ELK;
+  - `style.css` (pure CSS `--af-*` variables, `theme="vscode"` maps them onto `--vscode-*`);
+  - `elk-worker.js`, a verbatim copy of `elkjs/lib/elk-worker.min.js` (EPL-2.0, license in `dist/elk-worker.LICENSE.md`).
 
-### Build Pipeline
+### Webview UI (`webview-ui/`)
 
-- **Extension**: webpack (`webpack.config.js`) → `dist/extension.js` (CommonJS)
-- **Webview**: Vite (`webview-ui/vite.config.ts`) → `webview-ui/build/` (static assets)
-- **Tests**: tsc → `out/test/` then run via `@vscode/test-cli`
+React 19 + Vite 5 + Tailwind 3. The app is a single bundle, used by both panels.
 
-### Key Dependencies
+- `App.tsx`: message bridge with the extension. It picks the mode from the first message: `update` → documentation, `update-flowchart` → graph. It also handles theme detection (`body.vscode-dark` / `vscode-high-contrast[-light]`) and keeps graph options in `vscode.setState`.
+- `components/FlowchartView.tsx`: workflow selector, "Copy as Mermaid", and `<ArazzoGraphFromDocument theme="vscode">` from arazzo-flow, with diagnostics, OpenAPI method resolver, selection, export and options.
+- `components/UnifiedDocumentationView.tsx` + `components/arazzo/*` + `components/primitives/*`: the documentation view. It covers 1.1 rendering: `AsyncMessageCard`, `SelectorValue`, `DependsOnList`, `$self` and `querystring`.
+- `lib/elk-host.ts`: ELK worker strategy. It uses a same-origin worker URL when possible. Otherwise it fetches `elk-worker.js` and starts it from a `blob:` URL (`createWorker`). If that fails, ELK runs on the main thread. `lib/elk-main-thread.ts` makes that fallback reuse the same `elk-worker.js` loaded as a nonce'd classic script, so the build ships ELK once.
+- `lib/arazzo-11.ts` and `lib/arazzo-utils.ts`: 1.1 helpers (async step, Selector, operationId split).
+- `types/arazzo.ts`: type-only re-export of arazzo-core, plus a few legacy fields.
+- `vite.config.ts`: `sharedAliases` (`@connethics/*` → `../vendor/...`, `elk-worker.js?url`, ELK fallback shim) and `sharedDedupe`. `vitest.config.ts` reuses them. The build outputs fixed names (`assets/[name].js`), with `index.js`, `index.css` and `elk-worker.js`.
 
-- `yaml` (v2) — YAML parsing/serialization (used in both extension and webview)
-- `mermaid` (v10) — Flowchart rendering in webview
-- `react` (v18) + `tailwindcss` (v3) — Webview UI framework
-- `lucide-react` — Icon library
+### Message protocol (extension ↔ webview)
+
+| Direction | Panel | Message |
+|---|---|---|
+| webview → ext | both | `{ type: 'ready' }`: the webview mounted, so the extension sends the spec |
+| webview → ext | both | `{ type: 'alert', text }`: show an error message |
+| ext → webview | preview | `{ type: 'update', spec }` |
+| ext → webview | preview | `{ type: 'scroll-to-step', stepId, workflowId }` (after a node click in the graph) |
+| ext → webview | flowchart | `{ type: 'update-flowchart', spec, workflowId?, diagnostics?, sources? }`. `diagnostics` are arazzo-core diagnostics and `sources` are parsed local OpenAPI documents keyed by source name. |
+| ext → webview | flowchart | `{ type: 'select-workflow', workflowId, stepId? }` (editor cursor → graph) |
+| webview → ext | flowchart | `{ type: 'step-selected', stepId, workflowId, reveal }`. It moves the editor cursor; `reveal: true` (Enter or double-click) also focuses the editor. It also scrolls the preview. |
+| webview → ext | flowchart | `{ type: 'workflow-selected', workflowId }` |
+| webview → ext | flowchart | `{ type: 'copy-mermaid', text, workflowId }`: the extension writes the clipboard |
+| webview → ext | flowchart | `{ type: 'export', format, filename, encoding: 'utf8' \| 'base64', data }`: the extension opens a save dialog |
+
+The types are `FlowchartMessage` in `src/panels/flowchart-panel.ts`. The handlers are in `App.tsx`.
+
+### Content Security Policy (`buildCsp` in `src/panels/webview-html.ts`)
+
+`default-src 'none'; script-src 'nonce-…' ${cspSource}; style-src ${cspSource} 'unsafe-inline'; font-src ${cspSource}; img-src ${cspSource} data:; connect-src ${cspSource}; worker-src blob:`
+
+- Every `<script>` of `build/index.html` receives the nonce, and asset URLs are rewritten with `asWebviewUri`.
+- `'unsafe-inline'` styles are needed by React Flow's positioning. `data:` images are needed by the PNG export.
+- `connect-src` + `worker-src blob:` serve the ELK worker. Workers from a resource URL are cross-origin in a webview, hence the blob.
+- There is no `unsafe-eval`. Keep it that way. The rationale is documented in the function's comment and in `lib/elk-host.ts`.
+
+### Build pipeline and packaging
+
+- Extension: webpack (`webpack.config.js`, `target: node`, `vscode` external) → `dist/extension.js` (CommonJS). arazzo-core and `yaml` are bundled into it.
+- Webview: Vite → `webview-ui/build/` (static assets loaded by the panels via `localResourceRoots`).
+- Tests: tsc → `out/test/`, run by `@vscode/test-cli` (`.vscode-test.mjs`, mocha timeout 10 s; VS Code downloaded into `.vscode-test/`).
+- `.vscodeignore` is a whitelist in practice. The VSIX keeps:
+  - `dist/`, `webview-ui/build/`, `snippets/` and `images/icon.png`;
+  - `README`, `CHANGELOG`, `LICENSE` and `THIRD-PARTY-NOTICES.md`;
+  - the vendored `LICENSE` files and `elk-worker.LICENSE.md`.
+  It excludes `src/`, `out/`, `vendor/` sources, `specs/`, `images/v2/`, `scripts/`, `context/`, the webview sources and `node_modules`.
+- README images use relative paths (`images/v2/*.png`). `vsce` rewrites them to `https://github.com/connEthics/arazzo-vscode/raw/HEAD/...`, so they must exist on the default branch when publishing. Otherwise, pass `--githubBranch <branch>`.
+- `snippets/arazzo.code-snippets` (YAML) is contributed through `contributes.snippets`.
+
+### Key dependencies
+
+- `yaml` v2: parsing with source ranges, in the extension and the webview.
+- `@xyflow/react` 12, `elkjs` 0.11 and `html-to-image`: the graph, through arazzo-flow.
+- `react` 19, `tailwindcss` 3, `lucide-react`, `react-markdown` + `remark-gfm`: the webview UI.
+- There is no Mermaid library. The Mermaid export is generated by arazzo-core (`graphToMermaid`).
 
 ## Testing
 
-Tests are VS Code integration tests in `src/test/extension.test.ts` using `@vscode/test-electron`. They validate Arazzo file parsing, diagnostics, and symbol providers against fixture files. Tests include 1-second delays for async diagnostic/symbol provider updates.
+- **Mocha integration tests** (`src/test/*.test.ts`, run inside VS Code):
+  - `extension.test.ts`, `validation.test.ts` (core diagnostics → VS Code), `v11.test.ts` (1.1 fixtures);
+  - `completion.test.ts`, `detection.test.ts`, `panel.test.ts` (panel lifecycle, CSP, single ELK asset, `findStepRange`, `loadLocalSources`, `revealStep`);
+  - `helpers.ts` holds the shared helpers.
+  - Fixtures live in `src/test/fixtures/`. `fixtures/v1.1/` contains the `e2e-order-to-cash` (OpenAPI + AsyncAPI) and `e2e-session-renewal` examples from arazzo-demo.
+  - Diagnostics are debounced, so the tests wait for them.
+- **Vitest** (`webview-ui/src/test/`): components, the 1.1 documentation view, the flowchart (with mocked ELK, `mock-elk.ts`) and `elk-host`.
+- Headless Linux: `xvfb-run -a npm test`.
 
 ## Conventions
 
-- TypeScript strict mode enabled (`tsconfig.json`)
-- ESLint with `typescript-eslint` and camelCase naming conventions
-- Extension activates on `onLanguage:yaml`
-- Webview uses VS Code theme detection (light/dark/high-contrast) via `document.body.className`
-- Tailwind classes use `vscode-dark` variant for theme-aware styling
+- TypeScript strict mode in both projects. ESLint (`typescript-eslint`, camelCase naming) on `src/`.
+- Activation: `onLanguage:yaml`. A YAML file is an Arazzo document when its root mapping has an `arazzo` key.
+- The webview follows the VS Code theme: `body.vscode-*` classes, `--vscode-*` variables and the Tailwind `vscode-dark` variant. Graph colors come from the VS Code theme (`--vscode-charts-*`, `--vscode-testing-*`…), not from the ConnEthics palette, which is reserved for the web apps.
+- Product name: "Arazzo for VS Code — by ConnEthics". Always spell it **ConnEthics** in prose; `connethics` is for identifiers only.
+- No telemetry. Remote sources are never fetched.
 
-## Active Technologies
-- TypeScript 5.2 (strict mode), ES2022 target (extension), ES2020 target (webview) + VS Code Extension API, webpack 5 (extension bundler), Vite 5 + React 18 + Tailwind 3 (webview), `yaml` v2 (parsing), `mermaid` v10.9 (flowcharts), `lucide-react` (icons) (001-extension-quality-roadmap)
-- N/A (in-memory parse cache per document URI) (001-extension-quality-roadmap)
+## Specs and plans
 
-## Recent Changes
-- 001-extension-quality-roadmap: Added TypeScript 5.2 (strict mode), ES2022 target (extension), ES2020 target (webview) + VS Code Extension API, webpack 5 (extension bundler), Vite 5 + React 18 + Tailwind 3 (webview), `yaml` v2 (parsing), `mermaid` v10.9 (flowcharts), `lucide-react` (icons)
+- `specs/002-arazzo-1-1-refonte/` covers the Arazzo 1.1.0 overhaul across the three ConnEthics repos (arazzo-vscode, arazzo-demo, website):
+  - `plan.md` and `tasks.md`: work packages, user decisions (naming, licenses, VS Code colors);
+  - `research/`: 1.1 spec delta, positioning, MCP, E2E runners, graph UI benchmark, plus the official schemas;
+  - `brand/`: BRAND.md, tokens, icon;
+  - `design/`: UI-SPEC.md and graph mock-ups.
+- The working branch of the overhaul is `claude/arazzo-1-1-0-refonte-iv866m`.
+- `context/arazzo-spec.md` is a local copy of the **1.0.1** specification text and is outdated. For 1.1.0, use `research/01-spec-delta-1.1.md` and https://spec.openapis.org/arazzo/v1.1.0.html.

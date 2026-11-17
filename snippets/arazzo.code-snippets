@@ -1,0 +1,210 @@
+{
+  "Arazzo 1.1 document": {
+    "prefix": [
+      "arazzo",
+      "arazzo-doc"
+    ],
+    "description": "New Arazzo 1.1.0 document: $self, info, one OpenAPI source, one workflow with one step",
+    "body": [
+      "arazzo: 1.1.0",
+      "\\$self: ${1:https://example.com/arazzo/${TM_FILENAME}}",
+      "info:",
+      "  title: ${2:My API workflows}",
+      "  summary: ${3:What these workflows achieve, in business terms}",
+      "  version: ${4:1.0.0}",
+      "sourceDescriptions:",
+      "  - name: ${5:api}",
+      "    url: ${6:./openapi.yaml}",
+      "    type: openapi",
+      "workflows:",
+      "  - workflowId: ${7:myWorkflow}",
+      "    summary: ${8:Business intent of the workflow}",
+      "    inputs:",
+      "      type: object",
+      "      required: [${9:customerId}]",
+      "      properties:",
+      "        ${9:customerId}:",
+      "          type: string",
+      "    steps:",
+      "      - stepId: ${10:firstStep}",
+      "        operationId: \\$sourceDescriptions.${5:api}.${11:getCustomer}",
+      "        parameters:",
+      "          - name: ${9:customerId}",
+      "            in: path",
+      "            value: \\$inputs.${9:customerId}",
+      "        successCriteria:",
+      "          - condition: \\$statusCode == 200",
+      "        outputs:",
+      "          ${12:id}: \\$response.body#/${12:id}",
+      "    outputs:",
+      "      ${12:id}: \\$steps.${10:firstStep}.outputs.${12:id}",
+      "$0"
+    ]
+  },
+  "Arazzo workflow": {
+    "prefix": [
+      "arazzo-workflow"
+    ],
+    "description": "Workflow (item of workflows): inputs, one step, outputs",
+    "body": [
+      "- workflowId: ${1:myWorkflow}",
+      "  summary: ${2:Business intent of the workflow}",
+      "  inputs:",
+      "    type: object",
+      "    required: [${3:id}]",
+      "    properties:",
+      "      ${3:id}:",
+      "        type: string",
+      "  steps:",
+      "    - stepId: ${4:firstStep}",
+      "      operationId: \\$sourceDescriptions.${5:api}.${6:operationId}",
+      "      successCriteria:",
+      "        - condition: \\$statusCode == 200",
+      "      outputs:",
+      "        ${7:result}: \\$response.body#/${7:result}",
+      "  outputs:",
+      "    ${7:result}: \\$steps.${4:firstStep}.outputs.${7:result}",
+      "$0"
+    ]
+  },
+  "Arazzo step: HTTP (OpenAPI)": {
+    "prefix": [
+      "arazzo-step-http"
+    ],
+    "description": "HTTP step calling an OpenAPI operation, with parameter, success criterion and output",
+    "body": [
+      "- stepId: ${1:getOrder}",
+      "  description: ${2:What this call does}",
+      "  operationId: \\$sourceDescriptions.${3:api}.${4:getOrder}",
+      "  parameters:",
+      "    - name: ${5:orderId}",
+      "      in: ${6|path,query,header,cookie,querystring|}",
+      "      value: \\$inputs.${5:orderId}",
+      "  successCriteria:",
+      "    - condition: \\$statusCode == ${7:200}",
+      "  outputs:",
+      "    ${8:status}: \\$response.body#/${8:status}",
+      "$0"
+    ]
+  },
+  "Arazzo step: AsyncAPI send": {
+    "prefix": [
+      "arazzo-step-send",
+      "arazzo-async-send"
+    ],
+    "description": "Arazzo 1.1 AsyncAPI step that publishes a message on a channel (action: send)",
+    "body": [
+      "- stepId: ${1:publishEvent}",
+      "  description: ${2:Publish the event on the broker}",
+      "  channelPath: '{\\$sourceDescriptions.${3:events}.url}#/channels/${4:orderCreated}'",
+      "  action: send",
+      "  requestBody:",
+      "    contentType: application/json",
+      "    payload:",
+      "      ${5:orderId}: \\$steps.${6:createOrder}.outputs.${5:orderId}",
+      "$0"
+    ]
+  },
+  "Arazzo step: AsyncAPI receive": {
+    "prefix": [
+      "arazzo-step-receive",
+      "arazzo-async-receive"
+    ],
+    "description": "Arazzo 1.1 AsyncAPI step that waits for a correlated message (action: receive, correlationId, timeout in ms)",
+    "body": [
+      "- stepId: ${1:awaitConfirmation}",
+      "  description: ${2:Wait for the message correlated with the previous step}",
+      "  operationId: \\$sourceDescriptions.${3:events}.${4:receiveOrderConfirmed}",
+      "  action: receive",
+      "  correlationId: \\$steps.${5:createOrder}.outputs.${6:orderId}",
+      "  timeout: ${7:6000}",
+      "  successCriteria:",
+      "    - condition: \\$message.payload#/${8:status} == '${9:confirmed}'",
+      "  outputs:",
+      "    ${10:confirmedAt}: \\$message.payload#/${10:confirmedAt}",
+      "$0"
+    ]
+  },
+  "Arazzo dependsOn (join)": {
+    "prefix": [
+      "arazzo-depends-on"
+    ],
+    "description": "Arazzo 1.1 step-level dependsOn: this step waits for all the listed steps (join)",
+    "body": [
+      "dependsOn:",
+      "  - ${1:createInvoice}",
+      "  - ${2:createShipment}",
+      "$0"
+    ]
+  },
+  "Arazzo Selector (JSONPath RFC 9535)": {
+    "prefix": [
+      "arazzo-selector"
+    ],
+    "description": "Arazzo 1.1 Selector Object (output value): context + selector + versioned expression type",
+    "body": [
+      "${1:activeIds}:",
+      "  context: ${2:\\$response.body}",
+      "  selector: ${3:\\$.items[?@.status == 'active'].id}",
+      "  type:",
+      "    type: jsonpath",
+      "    version: rfc9535",
+      "$0"
+    ]
+  },
+  "Arazzo failure action: retry via workflow": {
+    "prefix": [
+      "arazzo-retry-workflow",
+      "arazzo-on-failure-retry"
+    ],
+    "description": "Arazzo 1.1 failure action (item of onFailure): run a reusable workflow with parameters, then retry the step",
+    "body": [
+      "- name: ${1:renewSessionOn401}",
+      "  type: retry",
+      "  workflowId: ${2:renewSession}",
+      "  parameters:",
+      "    - name: ${3:refreshToken}",
+      "      value: \\$inputs.${3:refreshToken}",
+      "  retryAfter: ${4:1}",
+      "  retryLimit: ${5:2}",
+      "  criteria:",
+      "    - condition: \\$statusCode == ${6:401}",
+      "$0"
+    ]
+  },
+  "Arazzo workflow exposed as an MCP tool": {
+    "prefix": [
+      "arazzo-mcp-tool"
+    ],
+    "description": "Workflow written to be exposed as one MCP tool: snake_case workflowId (tool name), agent-facing description, typed inputs (inputSchema) and outputs (structuredContent)",
+    "body": [
+      "- workflowId: ${1:get_order_status}",
+      "  summary: ${2:Get the status of an order}",
+      "  description: ${3:Use when the user asks where their order is. Read-only.}",
+      "  inputs:",
+      "    type: object",
+      "    required: [${4:orderId}]",
+      "    properties:",
+      "      ${4:orderId}:",
+      "        type: string",
+      "        description: ${5:Order identifier}",
+      "  steps:",
+      "    - stepId: ${6:getOrder}",
+      "      operationId: \\$sourceDescriptions.${7:api}.${8:getOrder}",
+      "      parameters:",
+      "        - name: ${4:orderId}",
+      "          in: path",
+      "          value: \\$inputs.${4:orderId}",
+      "      successCriteria:",
+      "        - condition: \\$statusCode == 200",
+      "      onFailure:",
+      "        - name: stop",
+      "          type: end",
+      "      outputs:",
+      "        ${9:status}: \\$response.body#/${9:status}",
+      "  outputs:",
+      "    ${9:status}: \\$steps.${6:getOrder}.outputs.${9:status}",
+      "$0"
+    ]
+  }
+}

@@ -1,11 +1,15 @@
 {
   "name": "arazzo-vscode",
   "publisher": "connethics",
-  "displayName": "Arazzo VSCode",
+  "displayName": "Arazzo for VS Code — by ConnEthics",
   "pricing": "Free",
   "license": "MIT",
-  "description": "Author, visualize, and validate Arazzo API workflows — live preview, flowcharts, and real-time diagnostics.",
+  "description": "Arazzo 1.1 workflows for OpenAPI and AsyncAPI: validation against the official schema, completion, quick fixes (migrate to 1.1), interactive theme-aware graph and live docs. By ConnEthics.",
   "icon": "images/icon.png",
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
   "homepage": "https://github.com/connEthics/arazzo-vscode#readme",
   "bugs": {
     "url": "https://github.com/connEthics/arazzo-vscode/issues"
@@ -14,28 +18,40 @@
     "type": "git",
     "url": "https://github.com/connEthics/arazzo-vscode.git"
   },
-  "version": "1.0.2",
+  "version": "2.0.0",
   "engines": {
     "vscode": "^1.90.0"
   },
   "categories": [
     "Programming Languages",
+    "Linters",
     "Visualization",
-    "Linters"
+    "Snippets"
   ],
   "keywords": [
     "arazzo",
-    "api",
-    "api-design",
-    "rest-api",
-    "workflow",
-    "testing",
+    "arazzo-1.1",
     "openapi",
+    "asyncapi",
+    "oai",
+    "workflow",
+    "api-workflow",
+    "mcp",
+    "model-context-protocol",
+    "ai-agents",
+    "e2e",
+    "e2e-testing",
+    "api-testing",
     "yaml",
-    "visualization",
+    "validation",
+    "linter",
+    "json-schema",
+    "graph",
     "flowchart",
-    "specification",
-    "mermaid"
+    "visualization",
+    "documentation",
+    "mermaid",
+    "connethics"
   ],
   "activationEvents": [
     "onLanguage:yaml"
@@ -78,7 +94,13 @@
           "when": "editorLangId == yaml"
         }
       ]
-    }
+    },
+    "snippets": [
+      {
+        "language": "yaml",
+        "path": "./snippets/arazzo.code-snippets"
+      }
+    ]
   },
   "scripts": {
     "vscode:prepublish": "cd webview-ui && npm install && npm run build && cd .. && npm run package",
