@@ -97,71 +97,87 @@ Règles communes à tous les lots :
 ## Vague 2 — Produits
 
 ### G1 — `@connethics/arazzo-flow`
-- [ ] Créer `<ArazzoGraph>` sur React Flow 12 + ELK, avec ELK exécuté dans un Web Worker. Le style passe par des variables CSS, sans Tailwind.
-- [ ] Implémenter les types de nœuds (HTTP, send, receive, sous-workflow, input, output, jonction) et les arêtes sémantiques.
-- [ ] Ajouter minimap, zoom/fit, recherche, navigation clavier, export SVG/PNG/Mermaid.
-- [ ] Écrire les tests et ajouter une démo dans `/showcase`.
+- [x] Créer `<ArazzoGraph>` sur React Flow 12 + ELK, avec ELK exécuté dans un Web Worker. Le style passe par des variables CSS, sans Tailwind.
+- [x] Implémenter les types de nœuds (HTTP, send, receive, sous-workflow, input, output, jonction) et les arêtes sémantiques.
+- [x] Ajouter minimap, zoom/fit, recherche, navigation clavier, export SVG/PNG/Mermaid.
+- [x] Écrire les tests et ajouter une démo dans `/showcase`.
 
 ### V1 — vscode : conformité 1.1
-- [ ] `src/arazzo-detection.ts` : ajouter `1.1.0`.
-- [ ] `src/validation/*` : déléguer à core et mapper les diagnostics vers des ranges YAML.
-- [ ] Mettre à jour la complétion : clés et énumérations 1.1, `$message.`, `$self`, cibles `dependsOn` / `goto`.
-- [ ] Faire utiliser `ParseCache` au symbol provider.
-- [ ] Ajouter un quick-fix « Migrer vers 1.1.0 ».
-- [ ] Ajouter les fixtures 1.1 et mettre à jour les tests de version.
+- [x] `src/arazzo-detection.ts` : ajouter `1.1.0`.
+- [x] `src/validation/*` : déléguer à core et mapper les diagnostics vers des ranges YAML.
+- [x] Mettre à jour la complétion : clés et énumérations 1.1, `$message.`, `$self`, cibles `dependsOn` / `goto`.
+- [x] Faire utiliser `ParseCache` au symbol provider.
+- [x] Ajouter un quick-fix « Migrer vers 1.1.0 ».
+- [x] Ajouter les fixtures 1.1 et mettre à jour les tests de version.
 
 ### V2 — vscode : nouveau graphe et vue doc
-- [ ] Remplacer Mermaid par `<ArazzoGraph>` dans `FlowchartView`, et mapper les thèmes sur `--vscode-*`.
-- [ ] Ajuster le CSP pour le worker ELK, en gardant le nonce.
-- [ ] Vue doc : afficher async, Selectors, `dependsOn` et `$self`. Décider du sort de la vue séquence, aujourd'hui morte.
-- [ ] Passer le webview en React 19.
+- [x] Remplacer Mermaid par `<ArazzoGraph>` dans `FlowchartView`, et mapper les thèmes sur `--vscode-*`.
+- [x] Ajuster le CSP pour le worker ELK, en gardant le nonce.
+- [x] Vue doc : afficher async, Selectors, `dependsOn` et `$self`. Décider du sort de la vue séquence, aujourd'hui morte.
+- [x] Passer le webview en React 19.
 
 ### V3 — vscode : packaging et marque
-- [ ] Passer en version 2.0.0, ajouter `galleryBanner` et une icône 256 px.
-- [ ] Mettre à jour README, CHANGELOG, snippets MCP/E2E et `CLAUDE.md`.
-- [ ] Vérifier que `npx @vscode/vsce package` passe.
+- [x] Passer en version 2.0.0, ajouter `galleryBanner` et une icône 256 px.
+- [x] Mettre à jour README, CHANGELOG, snippets MCP/E2E et `CLAUDE.md`.
+- [x] Vérifier que `npx @vscode/vsce package` passe.
 
 ### A1 — arazzo-demo : migration
-- [ ] Brancher le parser et les diagnostics de core, et remplacer `ArazzoFlow` par G1.
-- [ ] Faire l'auto-layout ELK dans `BuilderCanvas.tsx`.
-- [ ] Ajouter les champs 1.1 dans l'Inspector.
-- [ ] Ajouter la galerie d'exemples E1.
-- [ ] Mettre à jour la matrice de conformité 1.1 et ajouter les tests `spec-compliance/1.1.0-*`.
-- [ ] Corriger les liens `/playground`.
-- [ ] Rebrander la landing avec les tokens B1.
+- [x] Brancher le parser et les diagnostics de core, et remplacer `ArazzoFlow` par G1.
+- [x] Faire l'auto-layout ELK dans `BuilderCanvas.tsx`.
+- [x] Ajouter les champs 1.1 dans l'Inspector.
+- [x] Ajouter la galerie d'exemples E1.
+- [x] Mettre à jour la matrice de conformité 1.1 et ajouter les tests `spec-compliance/1.1.0-*`.
+- [x] Corriger les liens `/playground`.
+- [x] Rebrander la landing avec les tokens B1.
 
 ### A2 — Skill file
-- [ ] Mettre à jour `arazzo.skill.md` (racine et `app/public/`) en 1.1.
-- [ ] Ajouter les sections MCP et E2E.
-- [ ] Mettre à jour `docs/ARAZZO_REFERENCE.md`.
+- [x] Mettre à jour `arazzo.skill.md` (racine et `app/public/`) en 1.1.
+- [x] Ajouter les sections MCP et E2E.
+- [x] Mettre à jour `docs/ARAZZO_REFERENCE.md`.
 
 ## Vague 3 — Website
 
 ### W0 — Socle i18n et SEO
-- [ ] Mettre en place les routes EN à la racine et FR sous `/fr/`, avec des dictionnaires de contenu et `alternates.languages`.
-- [ ] Ajouter `sitemap.ts`, `robots.ts` et un helper JSON-LD.
+- [x] Mettre en place les routes EN à la racine et FR sous `/fr/`, avec des dictionnaires de contenu et `alternates.languages`.
+- [x] Ajouter `sitemap.ts`, `robots.ts` et un helper JSON-LD.
 
 ### W1 — Article (EN + FR)
-- [ ] Créer `/insights/arazzo-1-1-mcp-e2e` et `/fr/insights/arazzo-1-1-mcp-e2e` : contenu Markdown, `ArticleHeader` et `AdvancedMarkdownRenderer`.
-- [ ] Produire les visuels (captures Playwright, image OG).
-- [ ] Mettre à jour `src/lib/articles.ts` et `src/app/insights/page.tsx`, et rendre les deux listes cohérentes.
-- [ ] Corriger l'article existant `arazzo-api-workflows` (date, `ArticleHeader`, lien vers le nouvel article).
-- [ ] **Faire relire par l'utilisateur.**
+- [x] Créer `/insights/arazzo-1-1-mcp-e2e` et `/fr/insights/arazzo-1-1-mcp-e2e` : contenu Markdown, `ArticleHeader` et `AdvancedMarkdownRenderer`.
+- [x] Produire les visuels (captures Playwright, image OG).
+- [x] Mettre à jour `src/lib/articles.ts` et `src/app/insights/page.tsx`, et rendre les deux listes cohérentes.
+- [x] Corriger l'article existant `arazzo-api-workflows` (date, `ArticleHeader`, lien vers le nouvel article).
+- [x] **Faire relire par l'utilisateur.**
 
 ### W2 — Landing `/arazzo` et `/fr/arazzo`
-- [ ] Construire les sections hero, pains, nouveautés 1.1, cas d'usage, graphe embarqué, outils, accompagnement, FAQ (JSON-LD) et CTA.
-- [ ] Ajouter les liens dans le Footer et la navigation.
-- [ ] **Faire relire par l'utilisateur.**
+- [x] Construire les sections hero, pains, nouveautés 1.1, cas d'usage, graphe embarqué, outils, accompagnement, FAQ (JSON-LD) et CTA.
+- [x] Ajouter les liens dans le Footer et la navigation.
+- [x] **Faire relire par l'utilisateur.**
 
 ### W3 — Marketing
-- [ ] Rédiger les posts LinkedIn FR et EN et le carrousel, dans `marketing/linkedin-post-arazzo.md`.
+- [x] Rédiger les posts LinkedIn FR et EN et le carrousel, dans `marketing/linkedin-post-arazzo.md`.
 
 ## Vague 4 — QA
 
 ### Q1 — Cohérence inter-repos
-- [ ] Vérifier noms, liens, versions, captures et hash du code vendored.
+- [x] Vérifier noms, liens, versions, captures et hash du code vendored.
 
 ### Q2 — Revue et livraison
-- [ ] Lancer `/code-review` sur chaque repo.
-- [ ] Faire passer les vérifications de `plan.md` § Vérification.
-- [ ] Commit et push.
+- [x] Lancer `/code-review` sur chaque repo.
+- [x] Faire passer les vérifications de `plan.md` § Vérification.
+- [x] Commit et push.
+
+
+---
+
+## État au 17/11/2026 : réalisation terminée sur la branche, non publiée
+
+Toutes les vagues sont réalisées et poussées sur `claude/arazzo-1-1-0-refonte-iv866m` dans les 3 repos. Les cases cochées ci-dessus signifient « réalisé sur la branche », pas « validé par l'utilisateur ».
+
+**Reste à décider ou à faire (utilisateur) :**
+- [ ] Relire l'article (EN/FR), la landing (EN/FR) et le kit LinkedIn.
+- [ ] Licence de l'app Studio : texte de `arazzo-demo/LICENSE.md` (FSL-1.1-MIT proposé, toujours intitulé « Arazzo Builder »).
+- [ ] Extension : choisir le nom affiché (34 caractères, risque de troncature) et l'icône (actuelle réduite ou dérivée d'arazzo-mark), dater la 2.0.0 dans le CHANGELOG.
+- [ ] Merger sur `main` (extension d'abord, pour les images du README), puis `vsce publish` avec un token de l'éditeur `connethics`.
+- [ ] Déployer le Studio (`arazzo.skill.md`, `?example=`) puis le site. Définir `NEXT_PUBLIC_BASE_URL` en production.
+- [ ] Publier le schéma `connethics.com/schemas/arazzo-mcp-tools/1.0/schema.json`, ou retirer `$schema` des `mcp-tools.json`.
+- [ ] Optionnel : pages FR de /services, /ai-governance, /contact ; descriptions EN des exemples.
