@@ -74,7 +74,7 @@ Champs notables de `GraphEdge` : `sourcePort`, `targetPort`, `name` (nom de l'ac
 |---|---|---|
 | M1 | L'arête de séquence implicite n'est supprimée que si une action de succès **inconditionnelle** existe (R5, corrige V-5). | pet-adoption : `handleNoPets` → `getPetDetails` |
 | M2 | **Nouveau** : si une action de succès conditionnelle vise déjà l'étape suivante, la séquence implicite est absorbée (pas de doublon de trait). *À valider (§13, D-M2).* | pet-adoption : `findAvailablePets` → `handleNoPets` |
-| M3 | **Nouveau** : une étape qui porte `dependsOn` ne reçoit pas d'arête de séquence implicite de l'étape précédente du tableau. *À valider (D-M3).* | order-to-cash : `createInvoice`, `createShipment` |
+| M3 | Une étape qui porte `dependsOn` ne reçoit pas d'arête de séquence implicite de l'étape précédente du tableau : ses dépendances la remplacent, que l'étape précédente en fasse partie ou non (côté sortant, pas de séquence vers une étape suivante qui déclare `dependsOn` sans référencer l'étape courante). Si aucune entrée n'est résolue, la séquence est conservée. *Appliqué dans arazzo-core (G2).* | order-to-cash : `createInvoice`, `createShipment` en parallèle |
 | M4 | Jonction losange seulement pour 2 dépendances ou plus ; elle est insérée **juste avant** son étape cible dans `nodes` (sinon `MODEL_ORDER` inverse l'arête). | order-to-cash, catalogue, large-60 |
 | M5 | Retry avec `workflowId` : boucle `↻ ×N · Ns` sur l'étape **plus** arête `↻ via <wf>` vers la première étape du sous-workflow déplié (ou vers le nœud replié). Pas d'arête de retour. *À valider (D-RETRY).* | session-renewal |
 | M6 | Échecs implicites (aucun `onFailure`) : arêtes `implicit-failure` produites mais masquées par défaut. | tous |
