@@ -79,7 +79,9 @@ export async function loadLocalSources(resourceUri: vscode.Uri, spec: unknown): 
         }
         try {
             const stat = await vscode.workspace.fs.stat(target);
-            if (stat.size > MAX_SOURCE_BYTES) {
+            // Regular files only: devices and FIFOs report size 0 and would be
+            // read forever (e.g. `url: file:///dev/zero`).
+            if ((stat.type & vscode.FileType.File) === 0 || stat.size > MAX_SOURCE_BYTES) {
                 return;
             }
             const text = Buffer.from(await vscode.workspace.fs.readFile(target)).toString('utf8');

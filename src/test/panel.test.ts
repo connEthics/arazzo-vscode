@@ -171,6 +171,21 @@ suite('Panel Lifecycle', () => {
         assert.ok((sources.commerce as { paths?: object }).paths, 'parsed OpenAPI');
     });
 
+    test('Flowchart panel: loadLocalSources skips directories and non-regular files', async function () {
+        const dir = path.resolve(__dirname, '../../src/test/fixtures/v1.1/e2e-order-to-cash');
+        const uri = vscode.Uri.file(path.join(dir, 'e2e-order-to-cash.arazzo.yaml'));
+        const sourceDescriptions = [
+            { name: 'dir', url: '.', type: 'openapi' },
+            { name: 'commerce', url: './openapi.yaml', type: 'openapi' },
+        ];
+        if (process.platform !== 'win32' && fs.existsSync('/dev/zero')) {
+            // size 0 for stat, endless for read: must be skipped, not read
+            sourceDescriptions.push({ name: 'device', url: 'file:///dev/zero', type: 'openapi' });
+        }
+        const sources = await loadLocalSources(uri, { sourceDescriptions });
+        assert.deepStrictEqual(Object.keys(sources), ['commerce']);
+    });
+
     test('Flowchart panel: updateSelection with a stepId is a no-op when no panel exists', () => {
         const fakeUri = vscode.Uri.parse('file:///fake/nonexistent6.arazzo.yaml');
         ArazzoFlowchartPanel.updateSelection(fakeUri, 'testWorkflow', 'step1');
