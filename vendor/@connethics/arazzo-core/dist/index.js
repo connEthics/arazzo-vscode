@@ -12305,7 +12305,7 @@ function workflowToGraph(doc, workflowId, opts = {}) {
   groups.push({ id: WORKFLOW_LANE, kind: "workflow", label: "Workflow", nodeIds: nodes.filter((n) => n.group === WORKFLOW_LANE).map((n) => n.id) });
   const unknown = nodes.filter((n) => n.group === UNKNOWN_LANE).map((n) => n.id);
   if (unknown.length) groups.push({ id: UNKNOWN_LANE, kind: "unknown", label: "Unknown source", nodeIds: unknown });
-  const graph = { workflowId, nodes, edges, groups };
+  const graph = { workflowId, workflowIndex: asArray(asObj(doc).workflows).indexOf(wf), nodes, edges, groups };
   if (typeof wf.summary === "string") graph.summary = wf.summary;
   return graph;
 }

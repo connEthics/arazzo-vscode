@@ -1337,6 +1337,11 @@ interface GraphGroup {
 }
 interface WorkflowGraph {
     workflowId: string;
+    /**
+     * Position of the workflow in `workflows` (document order). Lets consumers map
+     * diagnostics paths (`['workflows', workflowIndex, 'steps', step.index, …]`) onto nodes.
+     */
+    workflowIndex: number;
     summary?: string;
     nodes: GraphNode[];
     edges: GraphEdge[];
