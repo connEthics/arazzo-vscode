@@ -33,6 +33,10 @@ npm run vendor:check
 
 Add or update tests with your change. Mocha integration tests live in `src/test/` and webview tests in `webview-ui/src/test/`.
 
+## README screenshots and demo GIF
+
+`images/v2/vscode-*.png`, `demo.gif` and `demo.mp4` come from a real VS Code window. `node scripts/record-demo.mjs` (after `npm run compile` and the webview build, on Linux with Xvfb, ffmpeg and ImageMagick) plays the scenarios with Playwright, checks that each one works, and rewrites them; `--shots` or `--gif` limits the run, `--vsix <file>` tests a packaged VSIX instead of the sources. Keep the GIF under 8 MB (about 3 MB today).
+
 ## How to contribute
 
 1. Fork the repository and create a branch for your feature or fix.

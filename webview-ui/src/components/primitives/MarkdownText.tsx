@@ -8,7 +8,8 @@ interface MarkdownTextProps {
   content: string;
   isDark: boolean;
   className?: string;
-  variant?: 'default' | 'compact';
+  /** `inherit` keeps the font size of the parent (headers set their own). */
+  variant?: 'default' | 'compact' | 'inherit';
 }
 
 function MarkdownText({ content, isDark, className = '', variant = 'default' }: MarkdownTextProps) {
@@ -19,7 +20,7 @@ function MarkdownText({ content, isDark, className = '', variant = 'default' }: 
   const tableHeaderClass = isDark ? 'bg-slate-700/50' : 'bg-gray-100';
   const tableRowClass = isDark ? 'even:bg-slate-800/30' : 'even:bg-gray-50';
   
-  const sizeClass = variant === 'compact' ? 'text-xs' : 'text-sm';
+  const sizeClass = variant === 'compact' ? 'text-xs' : variant === 'inherit' ? '' : 'text-sm';
 
   return (
     <div className={`${textClass} ${sizeClass} ${className} markdown-content`}>

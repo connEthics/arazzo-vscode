@@ -7,7 +7,7 @@
 
 **Write [Arazzo](https://spec.openapis.org/arazzo/v1.1.0.html) workflows that humans can read and agents can run.** Arazzo 1.1 for OpenAPI and AsyncAPI in VS Code: validation against the official schema, completion, quick fixes, an interactive graph and live documentation, all in the editor.
 
-![Interactive graph of an order-to-cash workflow (Dark+ theme): HTTP steps, an AsyncAPI receive step with its timeout, a dependsOn fan-out and join](images/v2/graph-dark.png)
+![Demo in VS Code: open an Arazzo 1.1 workflow, open the graph beside the YAML, click a step to jump to it, move the cursor to select a node, fix an unknown dependsOn step with a quick fix, then open the live documentation of an AsyncAPI receive step](images/v2/demo.gif)
 
 ## Why Arazzo?
 
@@ -35,9 +35,13 @@ Validation runs as you type and has two layers. The first checks the document ag
 
 Each diagnostic links to the matching section of the specification. Unused sources and components are faded.
 
+![An unknown step in dependsOn is underlined, listed in Problems with a link to its rule, and fixed by the "Change to awaitOrderConfirmation" quick fix; the graph shows the error badge on the step](images/v2/vscode-validation.png)
+
 ### Completion and snippets
 
-Completion is context-aware. It covers every 1.1 key, the enumerations (`asyncapi`, `send`/`receive`, `querystring`, `jsonpath`/`xpath`/`jsonpointer` and their versions) and runtime expressions such as `$message.payload`, `$self`, `$steps.<id>.outputs.<name>` and `$inputs.<name>`. It also proposes existing step and workflow IDs for `dependsOn` and `goto`.
+Completion is context-aware. It covers every 1.1 key, the enumerations (`asyncapi`, `send`/`receive`, `querystring`, `jsonpath`/`xpath`/`jsonpointer` and their versions) and runtime expressions such as `$message.payload`, `$self`, `$steps.<id>.outputs.<name>` and `$inputs.<name>`. It also proposes existing step and workflow IDs for `dependsOn` and `goto`. Inside a step, `$steps.` proposes only the steps it can reference: the earlier ones and those of its `dependsOn`.
+
+![Completion of $steps. in a step: the earlier steps and their outputs](images/v2/vscode-completion.png)
 
 The snippets cover the common structures:
 
@@ -61,9 +65,7 @@ The snippets cover the common structures:
 
 ### Interactive workflow graph
 
-| Light+ | High Contrast |
-|---|---|
-| ![Graph in the Light+ theme](images/v2/graph-light.png) | ![Graph in the High Contrast theme](images/v2/graph-hc.png) |
+![The YAML and its graph side by side in the Light Modern theme: the step under the cursor is selected in the graph](images/v2/vscode-graph-light.png)
 
 - **Follows your VS Code theme**, including high contrast. Node and edge colors come from the theme's own palette (`--vscode-charts-*`, `--vscode-testing-*`…).
 - **Semantic edges**: sequence, success and failure `goto`, retry loops (`×N / Ns`), `end`, `dependsOn` joins and calls to other workflows. AsyncAPI steps show `send` / `receive`, `timeout` and `correlationId`.
@@ -76,7 +78,7 @@ The layout engine ([ELK](https://eclipse.dev/elk/)) runs in a Web Worker that co
 
 ### Arazzo 1.1 documentation view
 
-![Documentation view of an AsyncAPI receive step: operation, correlation ID, timeout, dependencies, criteria and outputs](images/v2/docs-async.png)
+![Documentation view beside the YAML: an AsyncAPI receive step with its operation, correlation ID, timeout, dependencies, criteria and outputs](images/v2/vscode-docs.png)
 
 The preview renders the whole specification as navigable documentation that updates as you type: sources (OpenAPI and AsyncAPI), workflows, steps, AsyncAPI messages (`send` / `receive`, `correlationId`, `timeout`), Selectors, step `dependsOn`, `$self`, parameters, criteria, actions and components. Clicking a node in the graph scrolls the documentation to that step.
 

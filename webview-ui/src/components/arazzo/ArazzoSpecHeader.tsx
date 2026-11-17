@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import type { ArazzoInfo } from '../../types/arazzo';
-import { Badge } from '@/components/primitives';
+import { Badge, MarkdownText } from '@/components/primitives';
 import { getThemeClasses } from '../../hooks/useThemeClasses';
 
 interface ArazzoSpecHeaderProps {
@@ -85,7 +85,10 @@ function ArazzoSpecHeader({
           <p className={`${styles.description} ${theme.muted} mb-3 max-w-3xl mx-auto`}>{info.summary}</p>
         )}
         {info.description && (
-          <p className={`${styles.description} ${theme.muted} max-w-3xl mx-auto leading-relaxed`}>{info.description}</p>
+          // CommonMark (Arazzo §4.1): rendered, not shown as raw `**…**`.
+          <div className={`${styles.description} max-w-3xl mx-auto leading-relaxed`} data-testid="arazzo-info-description">
+            <MarkdownText content={info.description} isDark={isDark} variant="inherit" />
+          </div>
         )}
         <div className={`mt-6 inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
           <span>Arazzo Specification</span>
@@ -119,9 +122,9 @@ function ArazzoSpecHeader({
         
         {/* Description */}
         {info.description && (
-          <p className={`${styles.description} ${isDark ? 'text-slate-300' : 'text-gray-600'} leading-relaxed`}>
-            {info.description}
-          </p>
+          <div className={`${styles.description} leading-relaxed`} data-testid="arazzo-info-description">
+            <MarkdownText content={info.description} isDark={isDark} variant="inherit" />
+          </div>
         )}
         {self && <div className="mt-3">{self}</div>}
       </div>

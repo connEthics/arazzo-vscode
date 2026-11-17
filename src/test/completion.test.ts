@@ -502,6 +502,24 @@ workflows:
         assert.ok(components.includes('$components.parameters.traceId'), components.join(', '));
     });
 
+    test('$steps. in a step proposes only the earlier steps, in document order', async () => {
+        const content = header11 + '        correlationId: $steps.\n' +
+            '        outputs:\n          confirmedAt: $message.payload#/at\n' +
+            '      - stepId: capturePayment\n        operationId: $sourceDescriptions.shop.pay\n' +
+            '        outputs:\n          paymentId: $response.body#/id\n';
+        const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
+        await vscode.window.showTextDocument(doc);
+        const at = doc.positionAt(content.indexOf('$steps.') + '$steps.'.length);
+        const list = await vscode.commands.executeCommand<vscode.CompletionList>('vscode.executeCompletionItemProvider', doc.uri, at);
+        const steps = (list?.items ?? []).filter(i => String(typeof i.label === 'string' ? i.label : i.label.label).startsWith('$steps.') && i.detail !== undefined && !i.detail.startsWith('Runtime'));
+        const labels = steps.map(i => typeof i.label === 'string' ? i.label : i.label.label);
+        assert.ok(labels.includes('$steps.createOrder.outputs.orderId'), labels.join(', '));
+        assert.ok(!labels.some(l => l.startsWith('$steps.awaitConfirmation')), `A step does not reference itself: ${labels.join(', ')}`);
+        assert.ok(!labels.some(l => l.startsWith('$steps.capturePayment')), `A later step is a forward reference: ${labels.join(', ')}`);
+        const later = await completionLabelsAtEnd(content + '    outputs:\n      paid: $steps.');
+        assert.ok(later.includes('$steps.capturePayment.outputs.paymentId'), `Workflow outputs see every step: ${later.join(', ')}`);
+    });
+
     test('order-to-cash fixture: channelPath and action are suggested in a new step', async () => {
         const fixture = path.resolve(__dirname, '../../src/test/fixtures/v1.1/e2e-order-to-cash/e2e-order-to-cash.arazzo.yaml');
         const text = fs.readFileSync(fixture, 'utf8');

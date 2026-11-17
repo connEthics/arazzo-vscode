@@ -205,7 +205,8 @@ function scopeAt(entry: ParseCacheEntry, offset: number): Scope {
     }
     scope.workflow = doc?.workflows?.[wi];
     const steps = (workflows.items[wi] as YAMLMap | null)?.get?.('steps', true);
-    if (steps && isSeq(steps) && steps.range && offset >= steps.range[0]) {
+    // Not past the end of the steps (e.g. the workflow `outputs` that follow them).
+    if (steps && isSeq(steps) && steps.range && offset >= steps.range[0] && offset <= steps.range[2]) {
         const si = itemAt(steps, offset);
         if (si >= 0) {
             scope.step = scope.workflow?.steps?.[si];
@@ -460,15 +461,21 @@ export class YamlCompletionItemProvider implements vscode.CompletionItemProvider
         const doc = scope.doc;
         if (token.startsWith('$steps.')) {
             const steps = asArray<Step>(scope.workflow?.steps ?? asArray<Workflow>(doc?.workflows).flatMap(w => asArray<Step>(w?.steps)));
-            for (const step of steps) {
-                if (typeof step?.stepId !== 'string') {
-                    continue;
+            // Inside a step, only the steps it may reference: the earlier ones and those of its
+            // own dependsOn (a later step or the step itself is arazzo-step-forward-output-reference,
+            // §5.8.5.2.5). Proposals keep the order of the steps array.
+            const current = scope.step ? steps.indexOf(scope.step) : -1;
+            const dependsOn = new Set(asArray<unknown>((scope.step as { dependsOn?: unknown } | undefined)?.dependsOn).map(String));
+            steps.forEach((step, index) => {
+                if (typeof step?.stepId !== 'string' || (current >= 0 && index >= current && !dependsOn.has(step.stepId))) {
+                    return;
                 }
-                add(`$steps.${step.stepId}`, 'Step reference', `0_${step.stepId}`);
+                const order = String(index).padStart(3, '0');
+                add(`$steps.${step.stepId}`, 'Step reference', `0_${order}`);
                 for (const out of Object.keys(step.outputs ?? {})) {
-                    add(`$steps.${step.stepId}.outputs.${out}`, 'Step output', `0_${step.stepId}.${out}`);
+                    add(`$steps.${step.stepId}.outputs.${out}`, 'Step output', `0_${order}.${out}`);
                 }
-            }
+            });
         }
         if (token.startsWith('$inputs.')) {
             const props = (scope.workflow?.inputs as { properties?: Record<string, unknown> } | undefined)?.properties;

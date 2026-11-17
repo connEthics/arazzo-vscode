@@ -33,7 +33,10 @@ npm run vendor:sync      # re-copy from ../arazzo-demo (needs that checkout and 
 npm run build            # tsc + vite build → webview-ui/build/
 npm run dev              # Vite dev server
 npm test                 # vitest (jsdom, mocked ELK)
-node scripts/capture.mjs # README screenshots → ../images/v2/*.png (Playwright, preinstalled Chromium; never run `playwright install`)
+node scripts/capture.mjs # harness screenshots → ../images/v2/{graph,docs}-*.png (Playwright, preinstalled Chromium; never run `playwright install`)
+
+# README screenshots and demo GIF from a real VS Code (repo root, after compile + webview build)
+node scripts/record-demo.mjs [--shots|--gif] [--vsix file.vsix]   # → images/v2/vscode-*.png, demo.gif, demo.mp4; checks each scenario (exit 1 on KO)
 
 # Marketplace package (never `vsce publish` without an explicit request)
 npx @vscode/vsce package # runs vscode:prepublish: webview npm install + build, then npm run package

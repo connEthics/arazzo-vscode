@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Workflow } from '../../types/arazzo';
-import { Badge } from '@/components/primitives';
+import { Badge, MarkdownText } from '@/components/primitives';
 
 export type WorkflowHeaderVariant = 'card' | 'inspector' | 'header';
 
@@ -60,9 +60,9 @@ export default function WorkflowHeader({
             </div>
 
             {workflow.description && (
-                <p className={`mt-3 ${isDark ? 'text-slate-400' : 'text-gray-500'}`}>
-                    {workflow.description}
-                </p>
+                <div className="mt-3" data-testid="workflow-description">
+                    <MarkdownText content={workflow.description} isDark={isDark} variant="inherit" />
+                </div>
             )}
         </div>
     );

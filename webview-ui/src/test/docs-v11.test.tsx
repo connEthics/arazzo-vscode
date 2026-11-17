@@ -43,6 +43,21 @@ describe('Documentation view — Arazzo 1.1', () => {
         expect(c.queryByText('GET')).toBeNull();
     });
 
+    it('renders info and workflow descriptions as CommonMark, not raw markup', () => {
+        const spec: ArazzoSpec = {
+            ...orderToCash,
+            workflows: [{ ...orderToCash.workflows[0], description: 'Runs **after** the `createOrder` step.' }],
+        };
+        render(<UnifiedDocumentationView spec={spec} isDark={false} />);
+        const info = screen.getByTestId('arazzo-info-description');
+        expect(info.querySelector('strong')).toHaveTextContent('jonction');
+        expect(info.querySelectorAll('li').length).toBeGreaterThanOrEqual(3);
+        expect(info.textContent).not.toContain('**');
+        const wf = screen.getByTestId('workflow-description');
+        expect(wf.querySelector('strong')).toHaveTextContent('after');
+        expect(wf.querySelector('code')).toHaveTextContent('createOrder');
+    });
+
     it('renders step dependsOn (join) and Selector outputs', () => {
         render(<UnifiedDocumentationView spec={orderToCash} isDark />);
         const close = document.getElementById('step-orderToCash-closeOrder')!;
