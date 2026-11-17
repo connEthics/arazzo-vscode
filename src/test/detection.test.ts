@@ -103,6 +103,37 @@ workflows:
 		assert.strictEqual(selectedId, 'secondWorkflow', 'Should select second workflow');
 	});
 
+	test('detectAndSelectWorkflow reports the step under the cursor', async () => {
+		const content = `arazzo: "1.1.0"
+info:
+  title: Test
+  version: 1.0.0
+sourceDescriptions:
+  - name: test
+    url: http://example.com
+    type: openapi
+workflows:
+  - workflowId: wf
+    summary: header line
+    steps:
+      - stepId: first
+        operationId: op1
+      - stepId: second
+        operationId: op2
+`;
+		const doc = await vscode.workspace.openTextDocument({ content, language: 'yaml' });
+		const editor = await vscode.window.showTextDocument(doc);
+		const at = (line: number) => {
+			editor.selection = new vscode.Selection(new vscode.Position(line, 4), new vscode.Position(line, 4));
+			let got: [string, string | undefined] | undefined;
+			detectAndSelectWorkflow(editor, (_uri, wfId, stepId) => { got = [wfId, stepId]; });
+			return got;
+		};
+		assert.deepStrictEqual(at(10), ['wf', undefined], 'workflow header: no step');
+		assert.deepStrictEqual(at(13), ['wf', 'first']);
+		assert.deepStrictEqual(at(15), ['wf', 'second']);
+	});
+
 	test('detectAndSelectWorkflow does not select outside workflows', async () => {
 		const content = `arazzo: "1.0.1"
 info:

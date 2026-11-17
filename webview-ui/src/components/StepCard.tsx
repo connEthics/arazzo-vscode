@@ -44,6 +44,7 @@ function StepCard({
           variant="card" 
           index={index} 
           sourceName={sourceForStep?.name}
+          sourceType={sourceForStep?.type}
           isDark={isDark}
         />
       </div>

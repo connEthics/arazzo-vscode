@@ -1,7 +1,8 @@
 import type { Workflow } from '../../types/arazzo';
-import { outputsAsText } from '../../types/arazzo';
-import { SectionHeader, Badge } from '@/components/primitives';
-import { InputContent, OutputContent } from '../DetailViews';
+import { SectionHeader, Badge, PropertyList } from '@/components/primitives';
+import { InputContent } from '../DetailViews';
+import SelectorValue from './SelectorValue';
+import { isSelector } from '../../lib/arazzo-11';
 
 interface WorkflowBodyProps {
     workflow: Workflow;
@@ -49,14 +50,19 @@ export default function WorkflowBody({
                     badge={<Badge variant="output" isDark={isDark} size="sm">{outputCount}</Badge>}
                     isDark={isDark}
                 />
-                <OutputContent
-                    output={{ name: 'Workflow Outputs', value: '', allOutputs: outputsAsText(workflow.outputs) }}
-                    workflowOutputs={outputsAsText(workflow.outputs)}
-                    isDark={isDark}
-                    textClass={textClass}
-                    mutedClass={mutedClass}
-                    codeBgClass={codeBgClass}
-                />
+                {outputCount > 0 ? (
+                    <PropertyList
+                        isDark={isDark}
+                        items={Object.entries(workflow.outputs ?? {}).map(([name, value]) => ({
+                            name,
+                            value: isSelector(value) ? <SelectorValue selector={value} isDark={isDark} /> : String(value),
+                        }))}
+                    />
+                ) : (
+                    <div className={`p-8 text-center rounded-lg border border-dashed ${isDark ? 'border-slate-700 bg-slate-800/30' : 'border-gray-200 bg-gray-50'}`}>
+                        <p className={mutedClass}>No outputs defined for this workflow.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

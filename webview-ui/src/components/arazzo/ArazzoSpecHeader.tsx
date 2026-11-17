@@ -6,6 +6,8 @@ import { getThemeClasses } from '../../hooks/useThemeClasses';
 interface ArazzoSpecHeaderProps {
   info: ArazzoInfo;
   arazzoVersion: string;
+  /** Arazzo 1.1 `$self`: URI of this document, base for relative references. */
+  selfUri?: string;
   isDark: boolean;
   /** Center the content (for documentation view) */
   centered?: boolean;
@@ -22,6 +24,7 @@ interface ArazzoSpecHeaderProps {
 function ArazzoSpecHeader({ 
   info, 
   arazzoVersion,
+  selfUri,
   isDark, 
   centered = false,
   showIcon = true,
@@ -55,6 +58,17 @@ function ArazzoSpecHeader({
 
   const styles = sizeStyles[size];
 
+  const self = selfUri ? (
+    <div
+      className={`inline-flex items-center gap-2 max-w-full text-xs ${theme.muted}`}
+      title="$self: identity of this document and base URI for relative sourceDescriptions URLs (Arazzo 1.1)"
+      data-testid="arazzo-self"
+    >
+      <code className={`font-mono font-semibold ${isDark ? 'text-sky-300' : 'text-sky-700'}`}>$self</code>
+      <code className="font-mono break-all">{selfUri}</code>
+    </div>
+  ) : null;
+
   if (centered) {
     return (
       <div className="text-center">
@@ -77,6 +91,7 @@ function ArazzoSpecHeader({
           <span>Arazzo Specification</span>
           <span className="font-mono">{arazzoVersion}</span>
         </div>
+        {self && <div className="mt-3">{self}</div>}
       </div>
     );
   }
@@ -108,6 +123,7 @@ function ArazzoSpecHeader({
             {info.description}
           </p>
         )}
+        {self && <div className="mt-3">{self}</div>}
       </div>
       
       {/* Icon - hidden on mobile, visible on sm+ */}

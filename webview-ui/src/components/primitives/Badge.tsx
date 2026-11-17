@@ -14,7 +14,12 @@ export type BadgeVariant =
   | 'warning'
   | 'info'
   | 'openapi' 
+  | 'asyncapi'
   | 'arazzo'
+  | 'action-send'
+  | 'action-receive'
+  | 'selector'
+  | 'timeout'
   | 'required'
   | 'reference'
   | 'method-get'
@@ -26,6 +31,7 @@ export type BadgeVariant =
   | 'type-regex'
   | 'type-jsonpath'
   | 'type-xpath'
+  | 'type-jsonpointer'
   | 'type-string'
   | 'type-number'
   | 'type-integer'
@@ -83,6 +89,30 @@ const variantStyles: Record<BadgeVariant, { light: string; dark: string }> = {
   openapi: { 
     light: 'bg-blue-100 text-blue-700 border-blue-200', 
     dark: 'bg-blue-900/50 text-blue-300 border-blue-700' 
+  },
+  asyncapi: { 
+    light: 'bg-teal-100 text-teal-700 border-teal-200', 
+    dark: 'bg-teal-900/50 text-teal-300 border-teal-700' 
+  },
+  'action-send': { 
+    light: 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200', 
+    dark: 'bg-fuchsia-900/50 text-fuchsia-300 border-fuchsia-700' 
+  },
+  'action-receive': { 
+    light: 'bg-cyan-100 text-cyan-700 border-cyan-200', 
+    dark: 'bg-cyan-900/50 text-cyan-300 border-cyan-700' 
+  },
+  selector: { 
+    light: 'bg-sky-100 text-sky-700 border-sky-200', 
+    dark: 'bg-sky-900/50 text-sky-300 border-sky-700' 
+  },
+  timeout: { 
+    light: 'bg-amber-100 text-amber-700 border-amber-200', 
+    dark: 'bg-amber-900/50 text-amber-300 border-amber-700' 
+  },
+  'type-jsonpointer': { 
+    light: 'bg-lime-100 text-lime-700 border-lime-200', 
+    dark: 'bg-lime-900/50 text-lime-300 border-lime-700' 
   },
   arazzo: { 
     light: 'bg-purple-100 text-purple-700 border-purple-200', 

@@ -10,6 +10,42 @@ export function getNonce(): string {
     return text;
 }
 
+/**
+ * Content-Security-Policy of the Arazzo webviews (preview and flowchart).
+ *
+ * - `script-src 'nonce-…' ${cspSource}`: the bundle (module script rewritten with
+ *   the nonce) and, for the ELK main-thread fallback only, `assets/elk-worker.js`
+ *   loaded as a nonce'd classic script (webview-ui/src/lib/elk-main-thread.ts).
+ *   No `unsafe-eval`: neither ELK nor React Flow needs it.
+ * - `style-src ${cspSource} 'unsafe-inline'`: Tailwind CSS file plus the inline
+ *   `style` attributes React Flow uses to position nodes and edges.
+ * - `img-src ${cspSource} data:`: `data:` for the PNG export (html-to-image
+ *   draws a `data:` SVG on a canvas).
+ * - `connect-src ${cspSource}` and `worker-src blob:` — the ELK layout worker.
+ *   The webview document lives on a `vscode-webview://` origin while extension
+ *   files are served from `${cspSource}` (`https://*.vscode-cdn.net`), so
+ *   `new Worker(<resource URL>)` is a cross-origin worker and Chromium refuses
+ *   it whatever the CSP says. The webview therefore fetches `elk-worker.js`
+ *   (connect-src) and starts it from a `blob:` URL (worker-src) through the
+ *   `createWorker` option of @connethics/arazzo-flow
+ *   (webview-ui/src/lib/elk-host.ts). `worker-src` is limited to `blob:`: no
+ *   worker is ever started from a resource URL. A blob worker inherits this
+ *   policy, which is fine since ELK uses neither eval nor importScripts.
+ *   If either directive is missing, the graph still renders: arazzo-flow falls
+ *   back to ELK on the main thread (slower first layout, UI blocked meanwhile).
+ */
+export function buildCsp(cspSource: string, nonce: string): string {
+    return [
+        `default-src 'none'`,
+        `script-src 'nonce-${nonce}' ${cspSource}`,
+        `style-src ${cspSource} 'unsafe-inline'`,
+        `font-src ${cspSource}`,
+        `img-src ${cspSource} data:`,
+        `connect-src ${cspSource}`,
+        `worker-src blob:`,
+    ].join('; ') + ';';
+}
+
 export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.Uri): string {
     const buildPath = vscode.Uri.joinPath(extensionUri, 'webview-ui', 'build');
     const indexHtmlPath = vscode.Uri.joinPath(buildPath, 'index.html');
@@ -34,8 +70,7 @@ export function getHtmlForWebview(webview: vscode.Webview, extensionUri: vscode.
     }
 
     const nonce = getNonce();
-
-    const cspMeta = `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}' ${webview.cspSource}; font-src ${webview.cspSource}; img-src ${webview.cspSource} data:;">`;
+    const cspMeta = `<meta http-equiv="Content-Security-Policy" content="${buildCsp(webview.cspSource, nonce)}">`;
     htmlContent = htmlContent.replace('<head>', `<head>\n${cspMeta}`);
 
     htmlContent = htmlContent.replace(/<script/g, `<script nonce="${nonce}"`);

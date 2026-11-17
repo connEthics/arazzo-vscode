@@ -9,8 +9,8 @@ import {
   WorkflowBody 
 } from './arazzo';
 import StepCard from './StepCard';
-import MermaidDiagram from './MermaidDiagram';
 import { getThemeClasses } from '../hooks/useThemeClasses';
+import { sourceOfPath, splitOperationId } from '../lib/arazzo-11';
 
 interface UnifiedDocumentationViewProps {
   spec: ArazzoSpec;
@@ -19,7 +19,6 @@ interface UnifiedDocumentationViewProps {
   onWorkflowSelect?: (workflowId: string) => void;
   onStepClick?: (stepId: string, workflowId?: string) => void;
   onRefClick?: (reference: string) => void;
-  mermaidCharts?: Record<string, string>;
 }
 
 /**
@@ -33,7 +32,6 @@ function UnifiedDocumentationView({
   onWorkflowSelect,
   onStepClick,
   onRefClick,
-  mermaidCharts = {},
 }: UnifiedDocumentationViewProps) {
   const theme = getThemeClasses(isDark);
 
@@ -45,11 +43,17 @@ function UnifiedDocumentationView({
     return spec.workflows;
   }, [spec.workflows, selectedWorkflowId]);
 
-  // Helper to find source for a step
-  const getSourceForStep = (stepOperationId?: string) => {
-    if (!stepOperationId || !stepOperationId.includes('.')) return undefined;
-    const sourceName = stepOperationId.split('.')[0];
-    return spec.sourceDescriptions?.find((s: SourceDescription) => s.name === sourceName);
+  // Source description a step talks to: `$sourceDescriptions.<name>.op`, legacy
+  // `<name>.op`, `{$sourceDescriptions.<name>.url}#…` paths, or the only API source.
+  const getSourceForStep = (step: Step): SourceDescription | undefined => {
+    const sources = spec.sourceDescriptions ?? [];
+    const name = splitOperationId(step.operationId).source ?? sourceOfPath(step.channelPath ?? step.operationPath);
+    if (name) return sources.find((s: SourceDescription) => s.name === name);
+    if (step.operationId) {
+      const apis = sources.filter((s: SourceDescription) => s.type !== 'arazzo');
+      if (apis.length === 1) return apis[0];
+    }
+    return undefined;
   };
 
   return (
@@ -60,6 +64,7 @@ function UnifiedDocumentationView({
         <ArazzoSpecHeader 
           info={spec.info} 
           arazzoVersion={spec.arazzo} 
+          selfUri={typeof spec.$self === 'string' ? spec.$self : undefined}
           isDark={isDark} 
           centered={!selectedWorkflowId}
           size={selectedWorkflowId ? 'md' : 'lg'}
@@ -131,23 +136,6 @@ function UnifiedDocumentationView({
               </div>
             )}
 
-            {/* Sequence Diagram */}
-            {mermaidCharts[workflow.workflowId] && (
-              <div className="mb-10 avoid-break">
-                <h3 className={`text-sm font-semibold uppercase tracking-wider mb-4 ${theme.muted}`}>
-                  Sequence Diagram
-                </h3>
-                <div className={`rounded-xl border overflow-hidden ${theme.card} p-4`}>
-                  <MermaidDiagram
-                    chart={mermaidCharts[workflow.workflowId]}
-                    isDark={isDark}
-                    steps={workflow.steps}
-                    onNodeClick={(stepId: string) => onStepClick?.(stepId)}
-                  />
-                </div>
-              </div>
-            )}
-
             {/* Steps List */}
             <div className="space-y-6">
               <div className="flex items-center justify-between">
@@ -166,7 +154,7 @@ function UnifiedDocumentationView({
                     step={step}
                     workflowId={workflow.workflowId}
                     index={stepIndex}
-                    sourceForStep={getSourceForStep(step.operationId)}
+                    sourceForStep={getSourceForStep(step)}
                     isDark={isDark}
                     onStepClick={onStepClick}
                     onWorkflowClick={onWorkflowSelect}

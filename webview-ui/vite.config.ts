@@ -16,6 +16,8 @@ const vendor = path.resolve(__dirname, '../vendor/@connethics');
  */
 export const sharedAliases = [
   { find: /^@connethics\/arazzo-flow\/style\.css$/, replacement: `${vendor}/arazzo-flow/dist/style.css` },
+  // Imported with `?url` (src/lib/elk-host.ts): emitted once as build/assets/elk-worker.js.
+  { find: /^@connethics\/arazzo-flow\/elk-worker\.js/, replacement: `${vendor}/arazzo-flow/dist/elk-worker.js` },
   { find: /^@connethics\/arazzo-flow$/, replacement: `${vendor}/arazzo-flow/dist/index.js` },
   { find: /^@connethics\/arazzo-core$/, replacement: `${vendor}/arazzo-core/dist/index.js` },
   // ELK main-thread fallback: instead of a second 1.5 MB copy of ELK (the chunk
@@ -28,6 +30,8 @@ export const sharedDedupe = ['react', 'react-dom', '@xyflow/react', 'elkjs', 'ht
 
 export default defineConfig({
   plugins: [react()],
+  // Relative asset URLs: the webview serves the build from a vscode-resource origin.
+  base: './',
   resolve: {
     alias: sharedAliases,
     dedupe: sharedDedupe,
@@ -36,6 +40,8 @@ export default defineConfig({
     outDir: 'build',
     // Electron (VS Code ≥ 1.90): top-level await is used by the ELK fallback shim.
     target: 'es2022',
+    // index.js ≈ 770 kB (React 19, React Flow, react-markdown); ELK stays in elk-worker.js.
+    chunkSizeWarningLimit: 900,
     rollupOptions: {
       output: {
         entryFileNames: `assets/[name].js`,

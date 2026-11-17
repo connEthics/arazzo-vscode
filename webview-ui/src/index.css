@@ -11,3 +11,63 @@ body {
   padding: 0;
   margin: 0;
 }
+
+/* Flowchart panel chrome: native VS Code look, follows the user's theme. */
+.arazzo-flowchart {
+  background: var(--vscode-editor-background);
+  color: var(--vscode-foreground, var(--vscode-editor-foreground));
+  font-size: var(--vscode-font-size, 13px);
+}
+
+.arazzo-flowchart__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--vscode-widget-border, transparent));
+  background: var(--vscode-sideBar-background, var(--vscode-editor-background));
+}
+
+.arazzo-flowchart__select {
+  min-width: 0;
+  max-width: 60vw;
+  padding: 2px 6px;
+  border-radius: 2px;
+  font: inherit;
+  color: var(--vscode-dropdown-foreground);
+  background: var(--vscode-dropdown-background);
+  border: 1px solid var(--vscode-dropdown-border, var(--vscode-contrastBorder, transparent));
+}
+
+.arazzo-flowchart__meta {
+  color: var(--vscode-descriptionForeground);
+  font-size: 12px;
+}
+
+.arazzo-flowchart__button {
+  padding: 3px 10px;
+  border-radius: 2px;
+  font: inherit;
+  white-space: nowrap;
+  color: var(--vscode-button-secondaryForeground, var(--vscode-button-foreground));
+  background: var(--vscode-button-secondaryBackground, var(--vscode-button-background));
+  border: 1px solid var(--vscode-button-border, var(--vscode-contrastBorder, transparent));
+  cursor: pointer;
+}
+
+.arazzo-flowchart__button:hover:not(:disabled) {
+  background: var(--vscode-button-secondaryHoverBackground, var(--vscode-button-hoverBackground));
+}
+
+.arazzo-flowchart__select:focus-visible,
+.arazzo-flowchart__button:focus-visible {
+  outline: 1px solid var(--vscode-focusBorder);
+  outline-offset: 1px;
+}
+
+.arazzo-flowchart__button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { Step } from '../../types/arazzo';
 import { Badge } from '@/components/primitives';
 import { extractHttpMethod, getMethodBadgeVariant, type HttpMethod } from '../../lib/arazzo-utils';
+import { formatTimeout, isAsyncStep, sourceOfPath, splitOperationId } from '../../lib/arazzo-11';
 
 export type StepHeaderVariant = 'node' | 'card' | 'inspector';
 
@@ -10,6 +11,8 @@ interface StepHeaderProps {
     variant?: StepHeaderVariant;
     index?: number;
     sourceName?: string;
+    /** Type of the step's source description (`asyncapi` marks an AsyncAPI step). */
+    sourceType?: string;
     isDark?: boolean;
     className?: string;
     style?: React.CSSProperties;
@@ -26,27 +29,19 @@ export default function StepHeader({
     variant = 'card',
     index,
     sourceName,
+    sourceType,
     isDark = false,
     className = '',
     style,
     onClick
 }: StepHeaderProps) {
-    const method = useMemo(() => extractHttpMethod(step.operationId), [step.operationId]);
-
-    const operationName = useMemo(() => {
-        if (!step.operationId) return null;
-        return step.operationId.includes('.')
-            ? step.operationId.split('.').pop()
-            : step.operationId;
-    }, [step.operationId]);
-
-    const resolvedSourceName = useMemo(() => {
-        if (sourceName) return sourceName;
-        if (step.operationId?.includes('.')) {
-            return step.operationId.split('.')[0];
-        }
-        return null;
-    }, [sourceName, step.operationId]);
+    const isAsync = isAsyncStep(step, sourceType);
+    const op = useMemo(() => splitOperationId(step.operationId), [step.operationId]);
+    // AsyncAPI steps have no HTTP method; for the others it is only a naming hint.
+    const method = useMemo(() => (isAsync ? null : extractHttpMethod(op.name)), [isAsync, op.name]);
+    const operationName = op.name ?? null;
+    const resolvedSourceName = sourceName ?? op.source ?? sourceOfPath(step.channelPath ?? step.operationPath) ?? null;
+    const target = operationName || step.workflowId || step.channelPath;
 
     // View specific styles
     const containerClasses = useMemo(() => {
@@ -66,7 +61,7 @@ export default function StepHeader({
         <div className={containerClasses} onClick={onClick} style={style}>
             {/* Index/Icon - Usually for list/card views */}
             {index !== undefined && variant === 'card' && (
-                <span className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold ${getMethodBg(method)} text-white flex-shrink-0`}>
+                <span className={`w-7 h-7 rounded flex items-center justify-center text-xs font-bold ${isAsync ? 'bg-fuchsia-500' : getMethodBg(method)} text-white flex-shrink-0`}>
                     {index + 1}
                 </span>
             )}
@@ -84,6 +79,18 @@ export default function StepHeader({
                         {step.stepId}
                     </h4>
 
+                    {/* AsyncAPI action (1.1) */}
+                    {isAsync && step.action && (
+                        <Badge variant={step.action === 'send' ? 'action-send' : 'action-receive'} size="xs" isDark={isDark}>
+                            {step.action === 'send' ? '\u2191 send' : '\u2193 receive'}
+                        </Badge>
+                    )}
+                    {step.timeout !== undefined && variant !== 'node' && (
+                        <Badge variant="timeout" size="xs" isDark={isDark} className="normal-case">
+                            {'\u23F1'} {formatTimeout(step.timeout)}
+                        </Badge>
+                    )}
+
                     {/* HTTP Method Badge */}
                     {method && (
                         <Badge
@@ -96,18 +103,18 @@ export default function StepHeader({
                     )}
 
                     {/* Operation Path/ID or Workflow ID */}
-                    {(operationName || step.workflowId) && variant !== 'node' && (
-                        <div className="flex items-center gap-1">
+                    {target && variant !== 'node' && (
+                        <div className="flex items-center gap-1 min-w-0">
                             {step.workflowId && <Badge variant="workflow" size="xs" isDark={isDark}>Workflow</Badge>}
-                            <code className={`text-xs px-2 py-0.5 rounded ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
-                                {operationName || step.workflowId}
+                            <code className={`text-xs px-2 py-0.5 rounded truncate ${isDark ? 'bg-slate-700 text-slate-300' : 'bg-gray-100 text-gray-600'}`}>
+                                {target}
                             </code>
                         </div>
                     )}
 
                     {/* Source Badge */}
                     {resolvedSourceName && (
-                        <Badge variant="source" size="xs" isDark={isDark} className="uppercase">
+                        <Badge variant={isAsync ? 'asyncapi' : 'source'} size="xs" isDark={isDark} className="uppercase">
                             {resolvedSourceName}
                         </Badge>
                     )}

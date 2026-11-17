@@ -4,7 +4,16 @@ import { isReusableObject } from '../../types/arazzo';
 
 // Import internal components
 import { CriterionBadge, ActionList, PayloadReplacements } from './index';
+import DependsOnList from './DependsOnList';
+import AsyncMessageCard from './AsyncMessageCard';
+import SelectorValue from './SelectorValue';
 import { Card, Badge, CodeBlock, PropertyList } from '@/components/primitives';
+import { isAsyncStep, isSelector, splitOperationId, sourceOfPath } from '../../lib/arazzo-11';
+
+const LOCATION_HINTS: Record<string, string> = {
+    querystring: 'Entire query string (OAS 3.2, Arazzo 1.1)',
+    channel: 'AsyncAPI channel parameter',
+};
 
 export type StepBodyVariant = 'full' | 'compact';
 
@@ -29,6 +38,7 @@ export default function StepBody({
     step,
     workflowId,
     variant = 'full',
+    sourceForStep,
     isDark = false,
     onStepClick,
     onWorkflowClick,
@@ -45,20 +55,30 @@ export default function StepBody({
     const codeBgClass = isDark ? 'bg-slate-800' : 'bg-gray-50';
 
     // --- Data Preparation ---
+    const isAsync = isAsyncStep(step, sourceForStep?.type);
+    const asyncSourceName = sourceForStep?.name ?? splitOperationId(step.operationId).source ?? sourceOfPath(step.channelPath);
+
     const parameterItems = useMemo(() => step.parameters
         ?.filter((p): p is Parameter => !isReusableObject(p))
         .map(p => ({
             name: p.name,
-            value: typeof p.value === 'string' ? p.value : JSON.stringify(p.value),
+            value: isSelector(p.value)
+                ? <SelectorValue selector={p.value} isDark={isDark} />
+                : typeof p.value === 'string' ? p.value : JSON.stringify(p.value),
             type: p.in || undefined,
-        })) || [], [step.parameters]);
+            description: p.in ? LOCATION_HINTS[p.in] : undefined,
+        })) || [], [step.parameters, isDark]);
 
     const outputItems = useMemo(() => step.outputs
         ? Object.entries(step.outputs).map(([key, value]) => ({
             name: key,
-            value: typeof value === 'string' ? value : JSON.stringify(value),
+            value: isSelector(value)
+                ? <SelectorValue selector={value} isDark={isDark} />
+                : typeof value === 'string' ? value : JSON.stringify(value),
         }))
-        : [], [step.outputs]);
+        : [], [step.outputs, isDark]);
+
+    const payload = step.requestBody?.payload;
 
 
     // --- COMPACT VARIANT (Nodes) ---
@@ -105,6 +125,21 @@ export default function StepBody({
     // --- FULL VARIANT (Inspector/Cards) ---
     return (
         <div className="space-y-4">
+            {/* AsyncAPI step (1.1) */}
+            {isAsync && (
+                <AsyncMessageCard step={step} isDark={isDark} sourceName={asyncSourceName} />
+            )}
+
+            {/* Step dependencies (1.1) */}
+            {step.dependsOn && step.dependsOn.length > 0 && (
+                <DependsOnList
+                    dependencies={step.dependsOn}
+                    kind="step"
+                    isDark={isDark}
+                    onStepClick={(stepId, wf) => onStepClick?.(stepId, wf ?? workflowId)}
+                />
+            )}
+
             {/* Parameters */}
             {step.parameters && step.parameters.length > 0 && (
                 <Card
@@ -117,7 +152,7 @@ export default function StepBody({
                             <PropertyList
                                 items={parameterItems}
                                 isDark={isDark}
-                                variant="compact"
+                                variant={parameterItems.some(i => i.description) ? 'detailed' : 'compact'}
                                 maxItems={6}
                                 forceExpanded={forceExpanded}
                             />
@@ -129,18 +164,22 @@ export default function StepBody({
             {/* Request Body */}
             {step.requestBody && (variant === 'full') && (
                 <Card
-                    title="Request Body"
+                    title={isAsync ? 'Message Payload' : 'Request Body'}
                     isDark={isDark}
                     badge={step.requestBody?.contentType && <Badge variant="info" isDark={isDark} size="xs">{step.requestBody.contentType}</Badge>}
                 >
                     <div className="space-y-3">
-                        <CodeBlock
-                            code={typeof step.requestBody?.payload === 'string' ? step.requestBody.payload : JSON.stringify(step.requestBody?.payload, null, 2) || ''}
-                            language="json"
-                            isDark={isDark}
-                            maxHeight={150}
-                            forceExpanded={forceExpanded}
-                        />
+                        {isSelector(payload) ? (
+                            <SelectorValue selector={payload} isDark={isDark} />
+                        ) : payload !== undefined && (
+                            <CodeBlock
+                                code={typeof payload === 'string' ? payload : JSON.stringify(payload, null, 2) || ''}
+                                language="json"
+                                isDark={isDark}
+                                maxHeight={150}
+                                forceExpanded={forceExpanded}
+                            />
+                        )}
 
                         {step.requestBody?.replacements && step.requestBody.replacements.length > 0 && (
                             <PayloadReplacements replacements={step.requestBody.replacements} isDark={isDark} />

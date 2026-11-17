@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { detectAndSelectWorkflow } from './arazzo-detection';
-import { ParseCache, createDebouncedHandler } from './parse-cache';
+import { ParseCache, createDebouncedHandler, getCoreDiagnostics } from './parse-cache';
 import { runValidation } from './validation/index';
 import { ArazzoPreviewPanel } from './panels/preview-panel';
 import { ArazzoFlowchartPanel } from './panels/flowchart-panel';
@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
             const entry = cache.get(document);
             if (entry.isArazzo) {
                 ArazzoPreviewPanel.updateFromCache(document.uri, entry.json);
-                ArazzoFlowchartPanel.updateFromCache(document.uri, entry.json);
+                ArazzoFlowchartPanel.updateFromCache(document.uri, entry.json, getCoreDiagnostics(entry));
             }
         }
     });

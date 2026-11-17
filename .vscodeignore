@@ -16,11 +16,18 @@ vsc-extension-quickstart.md
 context/**
 .vscode-test.mjs
 
-# Vendored @connethics/arazzo-core: bundled into dist/extension.js by webpack,
-# so only its license notice ships (MIT + Apache-2.0 notice for the OAI schemas).
+# Vendored @connethics/arazzo-core and arazzo-flow: bundled into dist/extension.js
+# (core) and webview-ui/build (core, flow, ELK worker), so only their license
+# notices ship: MIT + Apache-2.0 notice for the OAI schemas, MIT for arazzo-flow,
+# EPL-2.0 for elkjs (webview-ui/build/assets/elk-worker.js).
 vendor/**
 !vendor/@connethics/arazzo-core/LICENSE
+!vendor/@connethics/arazzo-flow/LICENSE
+!vendor/@connethics/arazzo-flow/dist/elk-worker.LICENSE.md
 scripts/**
+
+# Screenshots for the README / site (linked from GitHub, not needed in the VSIX)
+images/v2/**
 
 # Webview UI exclusions (include only the production build)
 webview-ui/**

@@ -2,7 +2,10 @@ import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ArazzoPreviewPanel } from '../panels/preview-panel';
-import { ArazzoFlowchartPanel } from '../panels/flowchart-panel';
+import * as fs from 'fs';
+import { ArazzoFlowchartPanel, findStepRange, loadLocalSources } from '../panels/flowchart-panel';
+import { buildCsp } from '../panels/webview-html';
+import { parseArazzo } from '../arazzo-core';
 
 suite('Panel Lifecycle', () => {
 
@@ -118,5 +121,78 @@ suite('Panel Lifecycle', () => {
         panel!.dispose();
 
         assert.strictEqual(ArazzoFlowchartPanel.panels.has(key), false, 'Flowchart panel should be removed after dispose');
+    });
+
+    test('CSP: nonce scripts, ELK worker from blob: only, fetch of extension resources', () => {
+        const csp = buildCsp('https://res.vscode-cdn.net', 'N0nce');
+        const directives = new Map(csp.split(';').map(d => d.trim()).filter(Boolean).map(d => {
+            const [name, ...values] = d.split(/\s+/);
+            return [name, values] as [string, string[]];
+        }));
+        assert.deepStrictEqual(directives.get('default-src'), ["'none'"]);
+        assert.deepStrictEqual(directives.get('script-src'), ["'nonce-N0nce'", 'https://res.vscode-cdn.net']);
+        assert.deepStrictEqual(directives.get('worker-src'), ['blob:']);
+        assert.deepStrictEqual(directives.get('connect-src'), ['https://res.vscode-cdn.net']);
+        assert.ok(!csp.includes('unsafe-eval'), 'no unsafe-eval');
+    });
+
+    test('Webview build ships a single ELK worker script', () => {
+        const assets = path.resolve(__dirname, '../../webview-ui/build/assets');
+        assert.ok(fs.existsSync(path.join(assets, 'elk-worker.js')), 'build/assets/elk-worker.js');
+        const js = fs.readdirSync(assets).filter(f => f.endsWith('.js'));
+        const elkCopies = js.filter(f => fs.statSync(path.join(assets, f)).size > 1_000_000);
+        assert.deepStrictEqual(elkCopies, ['elk-worker.js'], 'ELK must not be bundled twice');
+        assert.ok(!js.some(f => /mermaid|flowDiagram|sequenceDiagram/.test(f)), 'no Mermaid renderer');
+    });
+
+    test('Flowchart panel: findStepRange locates the stepId of a step', () => {
+        const text = fs.readFileSync(path.resolve(__dirname, '../../src/test/fixtures/v1.1/e2e-order-to-cash/e2e-order-to-cash.arazzo.yaml'), 'utf8');
+        const { yamlDoc } = parseArazzo(text);
+        const range = findStepRange(yamlDoc, 'orderToCash', 'capturePayment');
+        assert.ok(range, 'range found');
+        assert.strictEqual(text.slice(range!.start, range!.end), 'capturePayment');
+        assert.ok(text.slice(range!.stepStart).startsWith('stepId: capturePayment'));
+        assert.strictEqual(findStepRange(yamlDoc, 'orderToCash', 'nope'), undefined);
+        assert.strictEqual(findStepRange(yamlDoc, 'nope', 'capturePayment'), undefined);
+    });
+
+    test('Flowchart panel: loadLocalSources reads local OpenAPI sources only', async () => {
+        const dir = path.resolve(__dirname, '../../src/test/fixtures/v1.1/e2e-order-to-cash');
+        const uri = vscode.Uri.file(path.join(dir, 'e2e-order-to-cash.arazzo.yaml'));
+        const sources = await loadLocalSources(uri, {
+            sourceDescriptions: [
+                { name: 'commerce', url: './openapi.yaml', type: 'openapi' },
+                { name: 'orderEvents', url: './asyncapi.yaml', type: 'asyncapi' },
+                { name: 'remote', url: 'https://example.com/openapi.yaml', type: 'openapi' },
+                { name: 'missing', url: './missing.yaml', type: 'openapi' },
+            ],
+        });
+        assert.deepStrictEqual(Object.keys(sources), ['commerce']);
+        assert.ok((sources.commerce as { paths?: object }).paths, 'parsed OpenAPI');
+    });
+
+    test('Flowchart panel: updateSelection with a stepId is a no-op when no panel exists', () => {
+        const fakeUri = vscode.Uri.parse('file:///fake/nonexistent6.arazzo.yaml');
+        ArazzoFlowchartPanel.updateSelection(fakeUri, 'testWorkflow', 'step1');
+        assert.strictEqual(ArazzoFlowchartPanel.panels.has(fakeUri.toString()), false);
+    });
+
+    test('Flowchart panel: revealStep moves the editor cursor to the step', async () => {
+        const fixturePath = path.resolve(__dirname, '../../src/test/fixtures/v1.1/e2e-order-to-cash/e2e-order-to-cash.arazzo.yaml');
+        const fixtureUri = vscode.Uri.file(fixturePath);
+        const extensionUri = vscode.extensions.getExtension('connethics.arazzo-vscode')?.extensionUri
+            || vscode.Uri.file(path.resolve(__dirname, '../../'));
+        const doc = await vscode.workspace.openTextDocument(fixtureUri);
+        await vscode.window.showTextDocument(doc);
+        ArazzoFlowchartPanel.createOrShow(extensionUri, fixtureUri);
+        const panel = ArazzoFlowchartPanel.panels.get(fixtureUri.toString())!;
+        try {
+            assert.strictEqual(await panel.revealStep('orderToCash', 'closeOrder', false), true);
+            const editor = vscode.window.visibleTextEditors.find(e => e.document.uri.toString() === fixtureUri.toString())!;
+            assert.strictEqual(doc.getText(editor.selection), 'closeOrder');
+            assert.strictEqual(await panel.revealStep('orderToCash', 'unknownStep', false), false);
+        } finally {
+            panel.dispose();
+        }
     });
 });

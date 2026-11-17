@@ -50,12 +50,31 @@ export function isKnownArazzoVersion(version: string): boolean {
     return coreIsKnownArazzoVersion(version);
 }
 
+/** `stepId` of the step whose mapping contains `line`, if any. */
+function stepAtLine(document: vscode.TextDocument, steps: unknown, line: number): string | undefined {
+    if (!isSeq(steps)) {
+        return undefined;
+    }
+    for (const step of steps.items) {
+        if (!isMap(step) || !step.range) {
+            continue;
+        }
+        const startLine = document.positionAt(step.range[0]).line;
+        const endLine = document.positionAt(step.range[2] || step.range[1]).line;
+        if (line >= startLine && line <= endLine) {
+            const id = step.get('stepId', true);
+            return id && isScalar(id) && id.value !== null ? String(id.value) : undefined;
+        }
+    }
+    return undefined;
+}
+
 /**
- * Detect which workflow the cursor is in and update the flowchart panel selection.
+ * Detect which workflow (and step) the cursor is in and update the flowchart panel selection.
  */
 export function detectAndSelectWorkflow(
     editor: vscode.TextEditor,
-    updateSelection: (resourceUri: vscode.Uri, workflowId: string) => void,
+    updateSelection: (resourceUri: vscode.Uri, workflowId: string, stepId?: string) => void,
     cache?: ParseCache
 ): void {
     try {
@@ -80,7 +99,7 @@ export function detectAndSelectWorkflow(
             if (cursorLine >= startLine && cursorLine <= endLine) {
                 const workflowIdNode = item.get('workflowId', true);
                 if (workflowIdNode && isScalar(workflowIdNode)) {
-                    updateSelection(editor.document.uri, String(workflowIdNode.value));
+                    updateSelection(editor.document.uri, String(workflowIdNode.value), stepAtLine(editor.document, item.get('steps', true), cursorLine));
                     return;
                 }
             }
